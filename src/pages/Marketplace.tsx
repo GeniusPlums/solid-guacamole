@@ -5,19 +5,35 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, SlidersHorizontal, Star, Instagram, Youtube, Twitter, LogOut } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, Star, Instagram, Youtube, Twitter, LogOut, Loader2, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useInfluencers } from "@/hooks/useInfluencers";
+import { useAuth } from "@/contexts/AuthContext";
+
+function formatNumber(num: number): string {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num.toString();
+}
 
 const Marketplace = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { profile, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [niche, setNiche] = useState("all");
   const [platform, setPlatform] = useState("all");
 
+  const { data: influencers, isLoading } = useInfluencers({
+    search: searchQuery,
+    niche: niche !== "all" ? niche : undefined,
+    platform: platform !== "all" ? platform : undefined,
+  });
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     toast({
       title: "Signed out",
       description: "You have been successfully signed out.",
@@ -25,39 +41,15 @@ const Marketplace = () => {
     navigate("/");
   };
 
-  // Mock influencer data - will be replaced with real data from database
-  const mockInfluencers = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      niche: "Fashion",
-      followers: "150K",
-      engagement: "4.8%",
-      rating: 4.9,
-      platforms: ["instagram", "youtube"],
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
-    },
-    {
-      id: 2,
-      name: "Mike Chen",
-      niche: "Tech",
-      followers: "320K",
-      engagement: "5.2%",
-      rating: 4.8,
-      platforms: ["youtube", "twitter"],
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
-    },
-    {
-      id: 3,
-      name: "Emma Williams",
-      niche: "Lifestyle",
-      followers: "580K",
-      engagement: "6.1%",
-      rating: 5.0,
-      platforms: ["instagram", "youtube", "twitter"],
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
-    },
-  ];
+  const handleGoHome = () => {
+    if (profile?.user_type === "brand") {
+      navigate("/brand/dashboard");
+    } else if (profile?.user_type === "influencer") {
+      navigate("/influencer/dashboard");
+    } else {
+      navigate("/");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,14 +57,22 @@ const Marketplace = () => {
       <header className="border-b border-border backdrop-blur-sm bg-background/80 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/brand-dashboard")}>
+            <div className="flex items-center space-x-2 cursor-pointer" onClick={handleGoHome}>
               <div className="w-8 h-8 bg-gradient-primary rounded-lg" />
               <span className="text-xl font-bold">ICY Platform</span>
             </div>
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            <div className="flex items-center gap-2">
+              {profile && (
+                <Button variant="ghost" size="sm" onClick={handleGoHome}>
+                  <Home className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -107,11 +107,14 @@ const Marketplace = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Niches</SelectItem>
-                  <SelectItem value="fashion">Fashion</SelectItem>
-                  <SelectItem value="tech">Tech</SelectItem>
-                  <SelectItem value="lifestyle">Lifestyle</SelectItem>
-                  <SelectItem value="fitness">Fitness</SelectItem>
-                  <SelectItem value="food">Food</SelectItem>
+                  <SelectItem value="Fashion">Fashion</SelectItem>
+                  <SelectItem value="Tech">Tech</SelectItem>
+                  <SelectItem value="Lifestyle">Lifestyle</SelectItem>
+                  <SelectItem value="Fitness">Fitness</SelectItem>
+                  <SelectItem value="Food">Food</SelectItem>
+                  <SelectItem value="Beauty">Beauty</SelectItem>
+                  <SelectItem value="Travel">Travel</SelectItem>
+                  <SelectItem value="Gaming">Gaming</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={platform} onValueChange={setPlatform}>
@@ -123,6 +126,7 @@ const Marketplace = () => {
                   <SelectItem value="instagram">Instagram</SelectItem>
                   <SelectItem value="youtube">YouTube</SelectItem>
                   <SelectItem value="twitter">Twitter</SelectItem>
+                  <SelectItem value="tiktok">TikTok</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -130,66 +134,88 @@ const Marketplace = () => {
         </Card>
 
         {/* Influencer Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockInfluencers.map((influencer) => (
-            <Card key={influencer.id} className="hover:shadow-lg transition-all overflow-hidden">
-              <div className="aspect-square overflow-hidden">
-                <img
-                  src={influencer.image}
-                  alt={influencer.name}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-xl">{influencer.name}</CardTitle>
-                    <CardDescription>{influencer.niche}</CardDescription>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold">{influencer.rating}</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Followers</p>
-                    <p className="font-semibold">{influencer.followers}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Engagement</p>
-                    <p className="font-semibold">{influencer.engagement}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {influencer.platforms.includes("instagram") && (
-                    <Badge variant="secondary">
-                      <Instagram className="w-3 h-3 mr-1" />
-                      IG
-                    </Badge>
-                  )}
-                  {influencer.platforms.includes("youtube") && (
-                    <Badge variant="secondary">
-                      <Youtube className="w-3 h-3 mr-1" />
-                      YT
-                    </Badge>
-                  )}
-                  {influencer.platforms.includes("twitter") && (
-                    <Badge variant="secondary">
-                      <Twitter className="w-3 h-3 mr-1" />
-                      X
-                    </Badge>
-                  )}
-                </div>
-                <Button className="w-full bg-gradient-primary">
-                  View Profile
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : influencers && influencers.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {influencers.map((influencer) => {
+              const totalFollowers = (influencer.instagram_followers || 0) + (influencer.youtube_subscribers || 0) + (influencer.twitter_followers || 0);
+              return (
+                <Card key={influencer.id} className="hover:shadow-lg transition-all overflow-hidden">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={influencer.profiles.avatar_url || ""} />
+                          <AvatarFallback>{influencer.profiles.full_name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg">{influencer.profiles.full_name}</CardTitle>
+                          <CardDescription>{influencer.niche?.join(", ") || "No niche"}</CardDescription>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-semibold">{influencer.rating?.toFixed(1) || "N/A"}</span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {influencer.bio && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">{influencer.bio}</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Followers</p>
+                        <p className="font-semibold">{formatNumber(totalFollowers)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Engagement</p>
+                        <p className="font-semibold">{influencer.engagement_rate || 0}%</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center flex-wrap gap-2">
+                      {influencer.instagram_handle && (
+                        <Badge variant="secondary">
+                          <Instagram className="w-3 h-3 mr-1" />
+                          {formatNumber(influencer.instagram_followers || 0)}
+                        </Badge>
+                      )}
+                      {influencer.youtube_handle && (
+                        <Badge variant="secondary">
+                          <Youtube className="w-3 h-3 mr-1" />
+                          {formatNumber(influencer.youtube_subscribers || 0)}
+                        </Badge>
+                      )}
+                      {influencer.twitter_handle && (
+                        <Badge variant="secondary">
+                          <Twitter className="w-3 h-3 mr-1" />
+                          {formatNumber(influencer.twitter_followers || 0)}
+                        </Badge>
+                      )}
+                    </div>
+                    <Button
+                      className="w-full bg-gradient-primary"
+                      onClick={() => navigate(`/influencer/${influencer.id}`)}
+                    >
+                      View Profile
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">
+                No influencers found. Try adjusting your filters or check back later.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );

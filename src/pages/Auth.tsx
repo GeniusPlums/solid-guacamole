@@ -26,9 +26,9 @@ const Auth = () => {
         // Redirect based on user type
         const userType = session.user.user_metadata?.user_type;
         if (userType === "brand") {
-          navigate("/brand-dashboard");
+          navigate("/brand/dashboard");
         } else if (userType === "influencer") {
-          navigate("/influencer-dashboard");
+          navigate("/influencer/dashboard");
         }
       }
     });
@@ -38,9 +38,9 @@ const Auth = () => {
         setUser(session.user);
         const userType = session.user.user_metadata?.user_type;
         if (userType === "brand") {
-          navigate("/brand-dashboard");
+          navigate("/brand/dashboard");
         } else if (userType === "influencer") {
-          navigate("/influencer-dashboard");
+          navigate("/influencer/dashboard");
         }
       } else {
         setUser(null);
