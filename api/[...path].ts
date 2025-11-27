@@ -305,7 +305,7 @@ app.get('/api/messages/conversations', authMiddleware, async (req: AuthRequest, 
       const partnerId = msg.fromUserId === req.user!.userId ? msg.toUserId : msg.fromUserId;
       if (!conversationMap.has(partnerId)) {
         const partner = await db.query.profiles.findFirst({ where: eq(schema.profiles.id, partnerId) });
-        const unread = messages.filter(m => m.fromUserId === partnerId && m.toUserId === req.user!.userId && !m.isRead).length;
+        const unread = messages.filter(m => m.fromUserId === partnerId && m.toUserId === req.user!.userId && !m.read).length;
         conversationMap.set(partnerId, { id: partnerId, recipientId: partnerId, recipientName: partner?.fullName || 'Unknown', recipientAvatar: partner?.avatarUrl, lastMessage: msg.content, lastMessageAt: msg.createdAt, unreadCount: unread });
       }
     }
@@ -336,7 +336,7 @@ app.post('/api/messages', authMiddleware, async (req: AuthRequest, res) => {
 
 app.patch('/api/messages/read/:userId', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    await db.update(schema.messages).set({ isRead: true }).where(and(eq(schema.messages.fromUserId, req.params.userId), eq(schema.messages.toUserId, req.user!.userId)));
+    await db.update(schema.messages).set({ read: true }).where(and(eq(schema.messages.fromUserId, req.params.userId), eq(schema.messages.toUserId, req.user!.userId)));
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to mark as read' });
