@@ -34,17 +34,21 @@ export function InfluencerCard({
     (influencer.twitter_followers || 0) +
     (influencer.tiktok_followers || 0);
 
+  // Handle demo profiles that don't have linked profiles table entry
+  const displayName = influencer.profiles?.full_name || influencer.instagram_handle || "Influencer";
+  const avatarUrl = influencer.profiles?.avatar_url || "";
+
   return (
     <Card className="hover:shadow-lg transition-all overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={influencer.profiles.avatar_url || ""} />
-              <AvatarFallback>{influencer.profiles.full_name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={avatarUrl} />
+              <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-lg">{influencer.profiles.full_name}</CardTitle>
+              <CardTitle className="text-lg">{displayName}</CardTitle>
               <CardDescription>{influencer.niche?.join(", ") || "No niche set"}</CardDescription>
             </div>
           </div>

@@ -57,6 +57,10 @@ export default function InfluencerProfileView() {
 
   const totalFollowers = (influencer.instagram_followers || 0) + (influencer.youtube_subscribers || 0) + (influencer.twitter_followers || 0);
 
+  // Handle demo profiles that don't have linked profiles table entry
+  const displayName = influencer.profiles?.full_name || influencer.instagram_handle || "Influencer";
+  const avatarUrl = influencer.profiles?.avatar_url || "";
+
   const handleSendRequest = async () => {
     if (!brandProfile || !collabForm.campaign_id) return;
 
@@ -93,13 +97,13 @@ export default function InfluencerProfileView() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-6 items-start">
               <Avatar className="h-32 w-32">
-                <AvatarImage src={influencer.profiles.avatar_url || ""} />
-                <AvatarFallback className="text-4xl">{influencer.profiles.full_name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={avatarUrl} />
+                <AvatarFallback className="text-4xl">{displayName.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h1 className="text-3xl font-bold mb-1">{influencer.profiles.full_name}</h1>
+                    <h1 className="text-3xl font-bold mb-1">{displayName}</h1>
                     {influencer.location && (
                       <p className="text-muted-foreground flex items-center gap-1">
                         <MapPin className="w-4 h-4" /> {influencer.location}
@@ -138,7 +142,7 @@ export default function InfluencerProfileView() {
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Send Collaboration Request</DialogTitle>
-                        <DialogDescription>Invite {influencer.profiles.full_name} to collaborate</DialogDescription>
+                        <DialogDescription>Invite {displayName} to collaborate</DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4 mt-4">
                         <div className="space-y-2">

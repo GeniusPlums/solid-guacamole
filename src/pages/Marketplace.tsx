@@ -142,17 +142,19 @@ const Marketplace = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {influencers.map((influencer) => {
               const totalFollowers = (influencer.instagram_followers || 0) + (influencer.youtube_subscribers || 0) + (influencer.twitter_followers || 0);
+              const displayName = influencer.profiles?.full_name || influencer.instagram_handle || "Influencer";
+              const avatarUrl = influencer.profiles?.avatar_url || "";
               return (
                 <Card key={influencer.id} className="hover:shadow-lg transition-all overflow-hidden">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={influencer.profiles.avatar_url || ""} />
-                          <AvatarFallback>{influencer.profiles.full_name.charAt(0)}</AvatarFallback>
+                          <AvatarImage src={avatarUrl} />
+                          <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <CardTitle className="text-lg">{influencer.profiles.full_name}</CardTitle>
+                          <CardTitle className="text-lg">{displayName}</CardTitle>
                           <CardDescription>{influencer.niche?.join(", ") || "No niche"}</CardDescription>
                         </div>
                       </div>

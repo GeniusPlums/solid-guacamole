@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 
 export type InfluencerWithProfile = Tables<"influencer_profiles"> & {
-  profiles: Tables<"profiles">;
+  profiles: Tables<"profiles"> | null;
 };
 
 interface UseInfluencersParams {
@@ -25,7 +25,7 @@ export function useInfluencers(params: UseInfluencersParams = {}) {
         .from("influencer_profiles")
         .select(`
           *,
-          profiles!inner(*)
+          profiles(*)
         `);
 
       // Apply filters
@@ -61,7 +61,7 @@ export function useInfluencers(params: UseInfluencersParams = {}) {
       if (params.search) {
         const searchLower = params.search.toLowerCase();
         filteredData = filteredData.filter((inf) =>
-          inf.profiles.full_name.toLowerCase().includes(searchLower) ||
+          inf.profiles?.full_name?.toLowerCase().includes(searchLower) ||
           inf.bio?.toLowerCase().includes(searchLower) ||
           inf.niche?.some((n) => n.toLowerCase().includes(searchLower))
         );
@@ -98,7 +98,7 @@ export function useInfluencer(id: string) {
         .from("influencer_profiles")
         .select(`
           *,
-          profiles!inner(*)
+          profiles(*)
         `)
         .eq("id", id)
         .single();

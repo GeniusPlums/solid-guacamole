@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Auth Test</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #eee; }
+    h1 { color: #00d9ff; }
+    .log { background: #16213e; padding: 15px; border-radius: 8px; margin: 10px 0; }
+    .success { color: #00ff88; }
+    .error { color: #ff4757; }
+    .warning { color: #ffa502; }
+    .info { color: #70a1ff; }
+    input, button { padding: 10px; margin: 5px; border-radius: 4px; border: none; }
+    input { background: #16213e; color: white; width: 300px; }
+    button { background: #00d9ff; color: #1a1a2e; cursor: pointer; font-weight: bold; }
+    button:hover { background: #00b8d4; }
+    #output { white-space: pre-wrap; max-height: 500px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Supabase Authentication Test</h1>
+  
+  <div class="log">
+    <h3>Configuration</h3>
+    <label>Supabase URL:</label><br>
+    <input type="text" id="supabaseUrl" value="https://dgvbnbzspmtzrflxwqlv.supabase.co"><br>
+    <label>Anon Key (get from Supabase Dashboard → Settings → API):</label><br>
+    <input type="text" id="anonKey" placeholder="Paste your anon key here"><br><br>
+    <button onclick="runTests()">🚀 Run All Tests</button>
+  </div>
+
+  <div class="log">
+    <h3>Test Output</h3>
+    <div id="output"></div>
+  </div>
+
+  <script>
+    const output = document.getElementById('output');
+    
+    function log(message, type = 'info') {
+      const colors = { success: 'success', error: 'error', warning: 'warning', info: 'info' };
+      output.innerHTML += `<span class="${colors[type]}">${message}</span>\n`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function clear() {
+      output.innerHTML = '';
+    }
+
+    async function runTests() {
+      clear();
+      
+      const SUPABASE_URL = document.getElementById('supabaseUrl').value;
+      const SUPABASE_ANON_KEY = document.getElementById('anonKey').value;
+      
+      log("=".repeat(50), 'info');
+      log("🧪 SUPABASE AUTHENTICATION TEST", 'info');
+      log("=".repeat(50), 'info');
+      log("");
+
+      // Check configuration
+      if (!SUPABASE_ANON_KEY) {
+        log("❌ ERROR: Please enter your Supabase Anon Key!", 'error');
+        log("", 'info');
+        log("How to get it:", 'warning');
+        log("1. Go to your Supabase Dashboard", 'info');
+        log("2. Click Settings → API", 'info');
+        log("3. Copy the 'anon public' key", 'info');
+        return;
+      }
+
+      log(`📋 URL: ${SUPABASE_URL}`, 'info');
+      log(`📋 Key: ${SUPABASE_ANON_KEY.substring(0, 30)}...`, 'info');
+      log("");
+
+      // Initialize client
+      log("🔧 Test 1: Initializing Supabase Client...", 'info');
+      let supabase;
+      try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        log("   ✅ Client initialized!", 'success');
+      } catch (e) {
+        log(`   ❌ Failed: ${e.message}`, 'error');
+        return;
+      }
+      log("");
+
+      // Test API connection
+      log("🌐 Test 2: Testing API Connection...", 'info');
+      try {
+        const { error } = await supabase.from('profiles').select('count').limit(1);
+        if (error) {
+          log(`   ⚠️ ${error.message}`, 'warning');
+        } else {
+          log("   ✅ API connected!", 'success');
+        }
+      } catch (e) {
+        log(`   ❌ ${e.message}`, 'error');
+      }
+      log("");
+
+      // Test Sign Up
+      const testEmail = `test-${Date.now()}@example.com`;
+      const testPassword = "TestPassword123!";
+      
+      log("📝 Test 3: Testing Sign Up...", 'info');
+      log(`   Email: ${testEmail}`, 'info');
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: testEmail,
+          password: testPassword,
+          options: { data: { name: "Test User", user_type: "brand" } }
+        });
+        if (error) {
+          log(`   ❌ ${error.message}`, 'error');
+        } else if (data.user) {
+          log(`   ✅ User created: ${data.user.id}`, 'success');
+          log(`   Confirmed: ${data.user.confirmed_at ? 'Yes' : 'No (email required)'}`, data.user.confirmed_at ? 'success' : 'warning');
+        }
+      } catch (e) {
+        log(`   ❌ ${e.message}`, 'error');
+      }
+      log("");
+
+      // Test Sign In
+      log("🔐 Test 4: Testing Sign In...", 'info');
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: testEmail,
+          password: testPassword
+        });
+        if (error) {
+          log(`   ❌ ${error.message}`, 'error');
+          if (error.message.includes("not confirmed")) {
+            log("   💡 Email confirmation is enabled. Disable it for testing.", 'warning');
+          }
+        } else if (data.session) {
+          log(`   ✅ Signed in successfully!`, 'success');
+        }
+      } catch (e) {
+        log(`   ❌ ${e.message}`, 'error');
+      }
+      log("");
+
+      // Get Session
+      log("📊 Test 5: Getting Current Session...", 'info');
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          log(`   ✅ Session active: ${session.user.email}`, 'success');
+        } else {
+          log("   ⚠️ No active session", 'warning');
+        }
+      } catch (e) {
+        log(`   ❌ ${e.message}`, 'error');
+      }
+      log("");
+      
+      log("=".repeat(50), 'info');
+      log("✅ Tests complete!", 'success');
+    }
+  </script>
+</body>
+</html>
+
