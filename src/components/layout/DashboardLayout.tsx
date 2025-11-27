@@ -46,8 +46,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     navigate("/");
   };
 
-  const isBrand = profile?.user_type === "brand";
-  const isInfluencer = profile?.user_type === "influencer";
+  const isBrand = profile?.userType === "brand";
+  const isInfluencer = profile?.userType === "influencer";
 
   const brandNavItems = [
     { path: "/brand/dashboard", icon: Home, label: "Dashboard" },
@@ -108,15 +108,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={profile?.avatar_url || ""} />
-                    <AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback>
+                    <AvatarImage src={profile?.avatarUrl || ""} />
+                    <AvatarFallback>{profile?.fullName?.charAt(0) || "U"}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{profile?.full_name}</p>
+                    <p className="text-sm font-medium">{profile?.fullName}</p>
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>

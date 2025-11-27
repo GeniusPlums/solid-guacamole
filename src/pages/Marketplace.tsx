@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Star, Instagram, Youtube, Twitter, LogOut, Loader2, Home } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useInfluencers } from "@/hooks/useInfluencers";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,9 +41,9 @@ const Marketplace = () => {
   };
 
   const handleGoHome = () => {
-    if (profile?.user_type === "brand") {
+    if (profile?.userType === "brand") {
       navigate("/brand/dashboard");
-    } else if (profile?.user_type === "influencer") {
+    } else if (profile?.userType === "influencer") {
       navigate("/influencer/dashboard");
     } else {
       navigate("/");
@@ -141,9 +140,9 @@ const Marketplace = () => {
         ) : influencers && influencers.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {influencers.map((influencer) => {
-              const totalFollowers = (influencer.instagram_followers || 0) + (influencer.youtube_subscribers || 0) + (influencer.twitter_followers || 0);
-              const displayName = influencer.profiles?.full_name || influencer.instagram_handle || "Influencer";
-              const avatarUrl = influencer.profiles?.avatar_url || "";
+              const totalFollowers = (influencer.instagramFollowers || 0) + (influencer.youtubeSubscribers || 0) + (influencer.twitterFollowers || 0);
+              const displayName = influencer.profiles?.fullName || influencer.profile?.fullName || influencer.instagramHandle || "Influencer";
+              const avatarUrl = influencer.profiles?.avatarUrl || influencer.profile?.avatarUrl || "";
               return (
                 <Card key={influencer.id} className="hover:shadow-lg transition-all overflow-hidden">
                   <CardHeader>
@@ -160,7 +159,7 @@ const Marketplace = () => {
                       </div>
                       <div className="flex items-center space-x-1">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold">{influencer.rating?.toFixed(1) || "N/A"}</span>
+                        <span className="font-semibold">{influencer.rating || "N/A"}</span>
                       </div>
                     </div>
                   </CardHeader>
@@ -175,26 +174,26 @@ const Marketplace = () => {
                       </div>
                       <div>
                         <p className="text-muted-foreground">Engagement</p>
-                        <p className="font-semibold">{influencer.engagement_rate || 0}%</p>
+                        <p className="font-semibold">{influencer.engagementRate || 0}%</p>
                       </div>
                     </div>
                     <div className="flex items-center flex-wrap gap-2">
-                      {influencer.instagram_handle && (
+                      {influencer.instagramHandle && (
                         <Badge variant="secondary">
                           <Instagram className="w-3 h-3 mr-1" />
-                          {formatNumber(influencer.instagram_followers || 0)}
+                          {formatNumber(influencer.instagramFollowers || 0)}
                         </Badge>
                       )}
-                      {influencer.youtube_handle && (
+                      {influencer.youtubeHandle && (
                         <Badge variant="secondary">
                           <Youtube className="w-3 h-3 mr-1" />
-                          {formatNumber(influencer.youtube_subscribers || 0)}
+                          {formatNumber(influencer.youtubeSubscribers || 0)}
                         </Badge>
                       )}
-                      {influencer.twitter_handle && (
+                      {influencer.twitterHandle && (
                         <Badge variant="secondary">
                           <Twitter className="w-3 h-3 mr-1" />
-                          {formatNumber(influencer.twitter_followers || 0)}
+                          {formatNumber(influencer.twitterFollowers || 0)}
                         </Badge>
                       )}
                     </div>

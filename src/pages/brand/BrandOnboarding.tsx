@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { profilesApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Building2 } from "lucide-react";
@@ -46,18 +46,15 @@ export default function BrandOnboarding() {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.from("brand_profiles").insert({
-        user_id: user.id,
-        company_name: formData.company_name,
+      await profilesApi.saveBrandProfile({
+        companyName: formData.company_name,
         industry: formData.industry,
-        website: formData.website || null,
-        description: formData.description || null,
+        website: formData.website || undefined,
+        description: formData.description || undefined,
       });
 
-      if (error) throw error;
-
       await refreshProfiles();
-      
+
       toast({
         title: "Welcome aboard!",
         description: "Your brand profile has been created successfully.",

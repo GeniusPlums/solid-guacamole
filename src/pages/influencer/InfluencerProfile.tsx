@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,28 +9,28 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { profilesApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Instagram, Youtube, Twitter, Save, Star, Users, TrendingUp } from "lucide-react";
+import { Loader2, Instagram, Youtube, Save, Star, Users, TrendingUp } from "lucide-react";
 
 const niches = ["Fashion", "Beauty", "Tech", "Gaming", "Fitness", "Food", "Travel", "Lifestyle", "Music", "Art", "Business", "Education"];
 
 export default function InfluencerProfile() {
-  const { user, profile, influencerProfile, refreshProfiles } = useAuth();
+  const { profile, influencerProfile, refreshProfiles } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedNiches, setSelectedNiches] = useState<string[]>(influencerProfile?.niche || []);
   const [formData, setFormData] = useState({
     bio: influencerProfile?.bio || "",
-    instagram_handle: influencerProfile?.instagram_handle || "",
-    instagram_followers: influencerProfile?.instagram_followers?.toString() || "",
-    youtube_handle: influencerProfile?.youtube_handle || "",
-    youtube_subscribers: influencerProfile?.youtube_subscribers?.toString() || "",
-    twitter_handle: influencerProfile?.twitter_handle || "",
-    twitter_followers: influencerProfile?.twitter_followers?.toString() || "",
-    tiktok_handle: influencerProfile?.tiktok_handle || "",
-    tiktok_followers: influencerProfile?.tiktok_followers?.toString() || "",
-    engagement_rate: influencerProfile?.engagement_rate?.toString() || "",
+    instagramHandle: influencerProfile?.instagramHandle || "",
+    instagramFollowers: influencerProfile?.instagramFollowers?.toString() || "",
+    youtubeHandle: influencerProfile?.youtubeHandle || "",
+    youtubeSubscribers: influencerProfile?.youtubeSubscribers?.toString() || "",
+    twitterHandle: influencerProfile?.twitterHandle || "",
+    twitterFollowers: influencerProfile?.twitterFollowers?.toString() || "",
+    tiktokHandle: influencerProfile?.tiktokHandle || "",
+    tiktokFollowers: influencerProfile?.tiktokFollowers?.toString() || "",
+    engagementRate: influencerProfile?.engagementRate?.toString() || "",
     location: influencerProfile?.location || "",
   });
 
@@ -40,15 +39,15 @@ export default function InfluencerProfile() {
       setSelectedNiches(influencerProfile.niche || []);
       setFormData({
         bio: influencerProfile.bio || "",
-        instagram_handle: influencerProfile.instagram_handle || "",
-        instagram_followers: influencerProfile.instagram_followers?.toString() || "",
-        youtube_handle: influencerProfile.youtube_handle || "",
-        youtube_subscribers: influencerProfile.youtube_subscribers?.toString() || "",
-        twitter_handle: influencerProfile.twitter_handle || "",
-        twitter_followers: influencerProfile.twitter_followers?.toString() || "",
-        tiktok_handle: influencerProfile.tiktok_handle || "",
-        tiktok_followers: influencerProfile.tiktok_followers?.toString() || "",
-        engagement_rate: influencerProfile.engagement_rate?.toString() || "",
+        instagramHandle: influencerProfile.instagramHandle || "",
+        instagramFollowers: influencerProfile.instagramFollowers?.toString() || "",
+        youtubeHandle: influencerProfile.youtubeHandle || "",
+        youtubeSubscribers: influencerProfile.youtubeSubscribers?.toString() || "",
+        twitterHandle: influencerProfile.twitterHandle || "",
+        twitterFollowers: influencerProfile.twitterFollowers?.toString() || "",
+        tiktokHandle: influencerProfile.tiktokHandle || "",
+        tiktokFollowers: influencerProfile.tiktokFollowers?.toString() || "",
+        engagementRate: influencerProfile.engagementRate?.toString() || "",
         location: influencerProfile.location || "",
       });
     }
@@ -62,25 +61,21 @@ export default function InfluencerProfile() {
     if (!influencerProfile) return;
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("influencer_profiles")
-        .update({
-          bio: formData.bio || null,
-          niche: selectedNiches,
-          instagram_handle: formData.instagram_handle || null,
-          instagram_followers: formData.instagram_followers ? parseInt(formData.instagram_followers) : null,
-          youtube_handle: formData.youtube_handle || null,
-          youtube_subscribers: formData.youtube_subscribers ? parseInt(formData.youtube_subscribers) : null,
-          twitter_handle: formData.twitter_handle || null,
-          twitter_followers: formData.twitter_followers ? parseInt(formData.twitter_followers) : null,
-          tiktok_handle: formData.tiktok_handle || null,
-          tiktok_followers: formData.tiktok_followers ? parseInt(formData.tiktok_followers) : null,
-          engagement_rate: formData.engagement_rate ? parseFloat(formData.engagement_rate) : null,
-          location: formData.location || null,
-        })
-        .eq("id", influencerProfile.id);
+      await profilesApi.saveInfluencerProfile({
+        bio: formData.bio || null,
+        niche: selectedNiches,
+        instagramHandle: formData.instagramHandle || null,
+        instagramFollowers: formData.instagramFollowers ? parseInt(formData.instagramFollowers) : null,
+        youtubeHandle: formData.youtubeHandle || null,
+        youtubeSubscribers: formData.youtubeSubscribers ? parseInt(formData.youtubeSubscribers) : null,
+        twitterHandle: formData.twitterHandle || null,
+        twitterFollowers: formData.twitterFollowers ? parseInt(formData.twitterFollowers) : null,
+        tiktokHandle: formData.tiktokHandle || null,
+        tiktokFollowers: formData.tiktokFollowers ? parseInt(formData.tiktokFollowers) : null,
+        engagementRate: formData.engagementRate ? parseFloat(formData.engagementRate) : null,
+        location: formData.location || null,
+      });
 
-      if (error) throw error;
       await refreshProfiles();
       toast({ title: "Profile updated", description: "Your profile has been saved successfully." });
     } catch (error: any) {
@@ -90,7 +85,7 @@ export default function InfluencerProfile() {
     }
   };
 
-  const totalFollowers = (influencerProfile?.instagram_followers || 0) + (influencerProfile?.youtube_subscribers || 0) + (influencerProfile?.twitter_followers || 0);
+  const totalFollowers = (influencerProfile?.instagramFollowers || 0) + (influencerProfile?.youtubeSubscribers || 0) + (influencerProfile?.twitterFollowers || 0);
 
   return (
     <DashboardLayout>
@@ -111,11 +106,11 @@ export default function InfluencerProfile() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-6 items-start">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={profile?.avatar_url || ""} />
-                <AvatarFallback className="text-2xl">{profile?.full_name?.charAt(0)}</AvatarFallback>
+                <AvatarImage src={profile?.avatarUrl || ""} />
+                <AvatarFallback className="text-2xl">{profile?.fullName?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-2">
-                <h2 className="text-2xl font-bold">{profile?.full_name}</h2>
+                <h2 className="text-2xl font-bold">{profile?.fullName}</h2>
                 <p className="text-muted-foreground">{influencerProfile?.location || "Location not set"}</p>
                 <div className="flex flex-wrap gap-2">
                   {selectedNiches.map((niche) => (
@@ -125,7 +120,7 @@ export default function InfluencerProfile() {
               </div>
               <div className="grid grid-cols-3 gap-6 text-center">
                 <div>
-                  <div className="flex items-center justify-center gap-1"><Star className="w-4 h-4 text-yellow-500" /><span className="text-2xl font-bold">{influencerProfile?.rating?.toFixed(1) || "N/A"}</span></div>
+                  <div className="flex items-center justify-center gap-1"><Star className="w-4 h-4 text-yellow-500" /><span className="text-2xl font-bold">{influencerProfile?.rating || "N/A"}</span></div>
                   <p className="text-sm text-muted-foreground">Rating</p>
                 </div>
                 <div>
@@ -133,7 +128,7 @@ export default function InfluencerProfile() {
                   <p className="text-sm text-muted-foreground">Followers</p>
                 </div>
                 <div>
-                  <div className="flex items-center justify-center gap-1"><TrendingUp className="w-4 h-4 text-green-500" /><span className="text-2xl font-bold">{influencerProfile?.engagement_rate || 0}%</span></div>
+                  <div className="flex items-center justify-center gap-1"><TrendingUp className="w-4 h-4 text-green-500" /><span className="text-2xl font-bold">{influencerProfile?.engagementRate || 0}%</span></div>
                   <p className="text-sm text-muted-foreground">Engagement</p>
                 </div>
               </div>
@@ -149,7 +144,7 @@ export default function InfluencerProfile() {
               <CardContent className="space-y-4">
                 <div className="space-y-2"><Label>Bio</Label><Textarea placeholder="Tell brands about yourself..." value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} rows={4} /></div>
                 <div className="space-y-2"><Label>Content Niches</Label><div className="flex flex-wrap gap-2">{niches.map((niche) => (<Button key={niche} type="button" variant={selectedNiches.includes(niche) ? "default" : "outline"} size="sm" onClick={() => toggleNiche(niche)}>{niche}</Button>))}</div></div>
-                <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label>Location</Label><Input placeholder="City, Country" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} /></div><div className="space-y-2"><Label>Engagement Rate (%)</Label><Input type="number" step="0.1" placeholder="4.5" value={formData.engagement_rate} onChange={(e) => setFormData({ ...formData, engagement_rate: e.target.value })} /></div></div>
+                <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label>Location</Label><Input placeholder="City, Country" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} /></div><div className="space-y-2"><Label>Engagement Rate (%)</Label><Input type="number" step="0.1" placeholder="4.5" value={formData.engagementRate} onChange={(e) => setFormData({ ...formData, engagementRate: e.target.value })} /></div></div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -158,12 +153,12 @@ export default function InfluencerProfile() {
               <CardHeader><CardTitle>Social Media Accounts</CardTitle><CardDescription>Connect your social media profiles</CardDescription></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</Label><Input placeholder="@username" value={formData.instagram_handle} onChange={(e) => setFormData({ ...formData, instagram_handle: e.target.value })} /></div>
-                  <div className="space-y-2"><Label>Instagram Followers</Label><Input type="number" placeholder="50000" value={formData.instagram_followers} onChange={(e) => setFormData({ ...formData, instagram_followers: e.target.value })} /></div>
+                  <div className="space-y-2"><Label className="flex items-center gap-2"><Instagram className="w-4 h-4" />Instagram</Label><Input placeholder="@username" value={formData.instagramHandle} onChange={(e) => setFormData({ ...formData, instagramHandle: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Instagram Followers</Label><Input type="number" placeholder="50000" value={formData.instagramFollowers} onChange={(e) => setFormData({ ...formData, instagramFollowers: e.target.value })} /></div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</Label><Input placeholder="Channel name" value={formData.youtube_handle} onChange={(e) => setFormData({ ...formData, youtube_handle: e.target.value })} /></div>
-                  <div className="space-y-2"><Label>YouTube Subscribers</Label><Input type="number" placeholder="100000" value={formData.youtube_subscribers} onChange={(e) => setFormData({ ...formData, youtube_subscribers: e.target.value })} /></div>
+                  <div className="space-y-2"><Label className="flex items-center gap-2"><Youtube className="w-4 h-4" />YouTube</Label><Input placeholder="Channel name" value={formData.youtubeHandle} onChange={(e) => setFormData({ ...formData, youtubeHandle: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>YouTube Subscribers</Label><Input type="number" placeholder="100000" value={formData.youtubeSubscribers} onChange={(e) => setFormData({ ...formData, youtubeSubscribers: e.target.value })} /></div>
                 </div>
               </CardContent>
             </Card>

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { supabase } from "@/integrations/supabase/client";
+import { profilesApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Sparkles } from "lucide-react";
@@ -52,18 +52,15 @@ export default function InfluencerOnboarding() {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.from("influencer_profiles").insert({
-        user_id: user.id,
+      await profilesApi.saveInfluencerProfile({
         bio: formData.bio || null,
         niche: selectedNiches,
-        instagram_handle: formData.instagram_handle || null,
-        youtube_handle: formData.youtube_handle || null,
-        twitter_handle: formData.twitter_handle || null,
-        tiktok_handle: formData.tiktok_handle || null,
+        instagramHandle: formData.instagram_handle || null,
+        youtubeHandle: formData.youtube_handle || null,
+        twitterHandle: formData.twitter_handle || null,
+        tiktokHandle: formData.tiktok_handle || null,
         location: formData.location || null,
       });
-
-      if (error) throw error;
 
       await refreshProfiles();
 

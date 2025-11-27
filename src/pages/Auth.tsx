@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { authApi, getToken } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
 const Auth = () => {
@@ -16,38 +15,29 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        // Redirect based on user type
-        const userType = session.user.user_metadata?.user_type;
-        if (userType === "brand") {
-          navigate("/brand/dashboard");
-        } else if (userType === "influencer") {
-          navigate("/influencer/dashboard");
-        }
-      }
-    });
+    const checkAuth = async () => {
+      const token = getToken();
+      if (!token) return;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const userType = session.user.user_metadata?.user_type;
-        if (userType === "brand") {
-          navigate("/brand/dashboard");
-        } else if (userType === "influencer") {
-          navigate("/influencer/dashboard");
+      try {
+        const session = await authApi.getSession();
+        if (session?.user) {
+          const userType = session.user.profile?.userType;
+          if (userType === "brand") {
+            navigate("/brand/dashboard");
+          } else if (userType === "influencer") {
+            navigate("/influencer/dashboard");
+          }
         }
-      } else {
-        setUser(null);
+      } catch (error) {
+        // Token invalid, user not logged in
       }
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    checkAuth();
   }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>, type: string) => {
@@ -60,49 +50,27 @@ const Auth = () => {
     const name = formData.get("name") as string;
 
     try {
-      // Step 1: Sign up the user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const result = await authApi.signUp({
         email,
         password,
-        options: {
-          data: {
-            name,
-            user_type: type,
-          },
-        },
+        name,
+        userType: type as 'brand' | 'influencer',
       });
 
-      if (authError) throw authError;
-
-      // Step 2: Manually create the profile (bypassing trigger)
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: authData.user.id,
-            user_type: type as "brand" | "influencer",
-            full_name: name,
-            email: email,
-          });
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-          // Don't throw - user is created, profile can be created later
-        }
+      if (!result.success) {
+        throw new Error('Failed to create account');
       }
 
       toast({
         title: "Success!",
-        description: "Account created successfully. You can now sign in.",
+        description: "Account created successfully.",
       });
 
-      // Auto sign-in after signup
-      if (authData.session) {
-        if (type === "brand") {
-          navigate("/brand/onboarding");
-        } else {
-          navigate("/influencer/onboarding");
-        }
+      // Navigate to onboarding
+      if (type === "brand") {
+        navigate("/brand/onboarding");
+      } else {
+        navigate("/influencer/onboarding");
       }
     } catch (error: any) {
       toast({
@@ -124,17 +92,27 @@ const Auth = () => {
     const password = formData.get("password") as string;
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const result = await authApi.signIn({ email, password });
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error('Invalid credentials');
+      }
 
       toast({
         title: "Welcome back!",
         description: "Successfully signed in.",
       });
+
+      // Navigate based on user type
+      const userType = result.session?.user?.profile?.userType;
+      if (userType === "brand") {
+        navigate("/brand/dashboard");
+      } else if (userType === "influencer") {
+        navigate("/influencer/dashboard");
+      } else {
+        // Default to brand dashboard if type unknown
+        navigate("/brand/dashboard");
+      }
     } catch (error: any) {
       toast({
         title: "Error",

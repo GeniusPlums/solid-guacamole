@@ -19,7 +19,7 @@ export default function InfluencerDashboard() {
       navigate("/auth?type=influencer");
       return;
     }
-    if (!isLoading && profile?.user_type !== "influencer") {
+    if (!isLoading && profile?.userType !== "influencer") {
       navigate("/brand/dashboard");
       return;
     }
@@ -47,10 +47,10 @@ export default function InfluencerDashboard() {
     const total = 8;
     if (influencerProfile.bio) completed++;
     if (influencerProfile.niche && influencerProfile.niche.length > 0) completed++;
-    if (influencerProfile.instagram_handle) completed++;
-    if (influencerProfile.youtube_handle) completed++;
-    if (influencerProfile.portfolio_images && influencerProfile.portfolio_images.length > 0) completed++;
-    if (influencerProfile.content_samples && influencerProfile.content_samples.length > 0) completed++;
+    if (influencerProfile.instagramHandle) completed++;
+    if (influencerProfile.youtubeHandle) completed++;
+    if (influencerProfile.portfolioImages && influencerProfile.portfolioImages.length > 0) completed++;
+    if (influencerProfile.contentSamples && influencerProfile.contentSamples.length > 0) completed++;
     if (influencerProfile.location) completed++;
     if (influencerProfile.languages && influencerProfile.languages.length > 0) completed++;
     return Math.round((completed / total) * 100);
@@ -68,7 +68,7 @@ export default function InfluencerDashboard() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              Welcome back, {profile?.full_name}!
+              Welcome back, {profile?.fullName}!
             </h1>
             <p className="text-muted-foreground">
               Manage your collaborations and grow your influence.

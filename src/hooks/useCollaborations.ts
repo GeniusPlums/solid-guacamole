@@ -1,54 +1,78 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { collaborationsApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import type { Collaboration, Campaign, InfluencerProfile, BrandProfile, Profile } from "@/db/types";
 
-export type CollaborationWithDetails = Tables<"collaborations"> & {
-  campaigns: Tables<"campaigns">;
-  influencer_profiles: Tables<"influencer_profiles"> & {
-    profiles: Tables<"profiles">;
+export type CollaborationWithDetails = Collaboration & {
+  campaigns?: Campaign;
+  campaign?: Campaign;
+  influencer_profiles?: InfluencerProfile & {
+    profiles?: Profile;
   };
-  brand_profiles: Tables<"brand_profiles"> & {
-    profiles: Tables<"profiles">;
+  influencer?: InfluencerProfile & {
+    profile?: Profile;
+  };
+  brand_profiles?: BrandProfile & {
+    profiles?: Profile;
+  };
+  brand?: BrandProfile & {
+    profile?: Profile;
   };
 };
 
 export function useCollaborations() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   return useQuery({
     queryKey: ["collaborations", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("collaborations")
-        .select(`
-          *,
-          campaigns(*),
-          influencer_profiles(*, profiles(*)),
-          brand_profiles(*, profiles(*))
-        `)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as CollaborationWithDetails[];
+      const data = await collaborationsApi.getAll();
+      // Transform to match expected format
+      return data.map((collab: any) => ({
+        ...collab,
+        campaigns: collab.campaign,
+        influencer_profiles: collab.influencer ? {
+          ...collab.influencer,
+          profiles: collab.influencer.profile,
+        } : undefined,
+        brand_profiles: collab.brand ? {
+          ...collab.brand,
+          profiles: collab.brand.profile,
+        } : undefined,
+      })) as CollaborationWithDetails[];
     },
     enabled: !!user,
   });
+}
+
+export interface CreateCollaborationInput {
+  campaignId: string;
+  influencerId: string;
+  offeredAmount?: number;
+  deliverables?: string;
+  deadline?: string;
+  notes?: string;
 }
 
 export function useCreateCollaboration() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (collaboration: TablesInsert<"collaborations">) => {
-      const { data, error } = await supabase
-        .from("collaborations")
-        .insert(collaboration)
-        .select()
-        .single();
+    mutationFn: async (collaboration: CreateCollaborationInput) => {
+      return collaborationsApi.create(collaboration);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["collaborations"] });
+    },
+  });
+}
 
-      if (error) throw error;
-      return data;
+export function useUpdateCollaborationStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      return collaborationsApi.updateStatus(id, status);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collaborations"] });
@@ -60,22 +84,8 @@ export function useUpdateCollaboration() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      status,
-    }: {
-      id: string;
-      status: Tables<"collaborations">["status"];
-    }) => {
-      const { data, error } = await supabase
-        .from("collaborations")
-        .update({ status })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+    mutationFn: async ({ id, ...data }: { id: string; [key: string]: any }) => {
+      return collaborationsApi.update(id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collaborations"] });
