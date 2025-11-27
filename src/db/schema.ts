@@ -120,6 +120,15 @@ export const ratings = pgTable('ratings', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Shortlisted Influencers
+export const shortlists = pgTable('shortlists', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  brandId: uuid('brand_id').notNull().references(() => brandProfiles.id, { onDelete: 'cascade' }),
+  influencerId: uuid('influencer_id').notNull().references(() => influencerProfiles.id, { onDelete: 'cascade' }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one }) => ({
   profile: one(profiles, { fields: [users.id], references: [profiles.id] }),
@@ -135,11 +144,18 @@ export const brandProfilesRelations = relations(brandProfiles, ({ one, many }) =
   profile: one(profiles, { fields: [brandProfiles.userId], references: [profiles.id] }),
   campaigns: many(campaigns),
   collaborations: many(collaborations),
+  shortlists: many(shortlists),
 }));
 
 export const influencerProfilesRelations = relations(influencerProfiles, ({ one, many }) => ({
   profile: one(profiles, { fields: [influencerProfiles.userId], references: [profiles.id] }),
   collaborations: many(collaborations),
+  shortlistedBy: many(shortlists),
+}));
+
+export const shortlistsRelations = relations(shortlists, ({ one }) => ({
+  brand: one(brandProfiles, { fields: [shortlists.brandId], references: [brandProfiles.id] }),
+  influencer: one(influencerProfiles, { fields: [shortlists.influencerId], references: [influencerProfiles.id] }),
 }));
 
 export const campaignsRelations = relations(campaigns, ({ one, many }) => ({

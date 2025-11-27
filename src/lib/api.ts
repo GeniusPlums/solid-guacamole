@@ -228,3 +228,132 @@ export const influencersApi = {
   },
 };
 
+// Messages API
+export interface Conversation {
+  id: string;
+  name: string;
+  avatar: string;
+  userType: string;
+  lastMessage: string;
+  timestamp: string;
+  unread: number;
+}
+
+export interface Message {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  content: string;
+  read: boolean;
+  createdAt: string;
+  collaborationId?: string;
+}
+
+export const messagesApi = {
+  async getConversations(): Promise<Conversation[]> {
+    return fetchApi<Conversation[]>('/messages/conversations');
+  },
+
+  async getMessages(userId: string): Promise<Message[]> {
+    return fetchApi<Message[]>(`/messages/${userId}`);
+  },
+
+  async sendMessage(data: { toUserId: string; content: string; collaborationId?: string }): Promise<Message> {
+    return fetchApi<Message>('/messages', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async markAsRead(userId: string): Promise<void> {
+    return fetchApi(`/messages/read/${userId}`, {
+      method: 'PATCH',
+    });
+  },
+};
+
+// Analytics API
+export interface BrandAnalytics {
+  summary: {
+    totalCampaigns: number;
+    activeCampaigns: number;
+    totalSpend: number;
+    activeCollabs: number;
+    pendingCollabs: number;
+    completedCollabs: number;
+    totalCollabs: number;
+  };
+  monthlyData: Array<{ month: string; spend: number; collaborations: number; completed: number }>;
+  nicheDistribution: Array<{ name: string; value: number; color: string }>;
+  campaignPerformance: Array<{ name: string; spend: number; collaborations: number; completed: number }>;
+}
+
+export interface InfluencerAnalytics {
+  summary: {
+    totalFollowers: number;
+    engagementRate: number;
+    totalEarnings: number;
+    completedCollabs: number;
+    activeCollabs: number;
+    pendingCollabs: number;
+    rating: number;
+  };
+  monthlyData: Array<{ month: string; earnings: number; collaborations: number }>;
+  platformDistribution: Array<{ name: string; value: number; color: string }>;
+}
+
+export const analyticsApi = {
+  async getBrandAnalytics(): Promise<BrandAnalytics> {
+    return fetchApi<BrandAnalytics>('/analytics/brand');
+  },
+
+  async getInfluencerAnalytics(): Promise<InfluencerAnalytics> {
+    return fetchApi<InfluencerAnalytics>('/analytics/influencer');
+  },
+};
+
+// Shortlists API
+export interface ShortlistItem {
+  id: string;
+  brandId: string;
+  influencerId: string;
+  notes: string | null;
+  createdAt: string;
+  influencer: {
+    id: string;
+    bio: string;
+    niche: string[];
+    instagramFollowers: number;
+    youtubeSubscribers: number;
+    engagementRate: number;
+    rating: number;
+    profile: {
+      fullName: string;
+      avatarUrl: string;
+    };
+  };
+}
+
+export const shortlistsApi = {
+  async getAll(): Promise<ShortlistItem[]> {
+    return fetchApi<ShortlistItem[]>('/shortlists');
+  },
+
+  async add(influencerId: string, notes?: string): Promise<any> {
+    return fetchApi('/shortlists', {
+      method: 'POST',
+      body: JSON.stringify({ influencerId, notes }),
+    });
+  },
+
+  async remove(influencerId: string): Promise<void> {
+    return fetchApi(`/shortlists/${influencerId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async check(influencerId: string): Promise<{ isShortlisted: boolean }> {
+    return fetchApi<{ isShortlisted: boolean }>(`/shortlists/check/${influencerId}`);
+  },
+};
+

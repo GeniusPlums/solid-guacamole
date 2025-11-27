@@ -18,6 +18,7 @@ import {
   Briefcase,
   BarChart3,
   MessageSquare,
+  Heart,
   Settings,
   LogOut,
   User,
@@ -52,10 +53,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const brandNavItems = [
     { path: "/brand/dashboard", icon: Home, label: "Dashboard" },
     { path: "/brand/discover", icon: Search, label: "Discover" },
+    { path: "/brand/shortlist", icon: Heart, label: "Shortlist" },
     { path: "/brand/campaigns", icon: Target, label: "Campaigns" },
     { path: "/brand/collaborations", icon: Briefcase, label: "Collaborations" },
     { path: "/brand/analytics", icon: BarChart3, label: "Analytics" },
     { path: "/brand/messages", icon: MessageSquare, label: "Messages" },
+    { path: "/brand/profile", icon: User, label: "Profile" },
   ];
 
   const influencerNavItems = [

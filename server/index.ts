@@ -5,6 +5,9 @@ import { profilesRouter } from './routes/profiles';
 import { campaignsRouter } from './routes/campaigns';
 import { collaborationsRouter } from './routes/collaborations';
 import { influencersRouter } from './routes/influencers';
+import { messagesRouter } from './routes/messages';
+import { analyticsRouter } from './routes/analytics';
+import { shortlistsRouter } from './routes/shortlists';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -22,6 +25,9 @@ app.use('/api/profiles', profilesRouter);
 app.use('/api/campaigns', campaignsRouter);
 app.use('/api/collaborations', collaborationsRouter);
 app.use('/api/influencers', influencersRouter);
+app.use('/api/messages', messagesRouter);
+app.use('/api/analytics', analyticsRouter);
+app.use('/api/shortlists', shortlistsRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

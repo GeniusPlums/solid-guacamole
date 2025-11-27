@@ -14,7 +14,9 @@ import { useCampaigns, useCreateCampaign } from "@/hooks/useCampaigns";
 import { useCreateCollaboration } from "@/hooks/useCollaborations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Star, Instagram, Youtube, Twitter, MapPin, Users, TrendingUp, ArrowLeft, MessageSquare, Send, Loader2 } from "lucide-react";
+import { Star, Instagram, Youtube, Twitter, MapPin, Users, TrendingUp, ArrowLeft, MessageSquare, Send, Loader2, Heart } from "lucide-react";
+import { useIsShortlisted, useAddToShortlist, useRemoveFromShortlist } from "@/hooks/useShortlists";
+import { cn } from "@/lib/utils";
 
 function formatNumber(num: number): string {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -29,6 +31,12 @@ export default function InfluencerProfileView() {
   const { profile, brandProfile } = useAuth();
   const { data: influencer, isLoading } = useInfluencer(id || "");
   const { data: campaigns } = useCampaigns();
+  const isBrand = profile?.userType === "brand";
+  const { data: shortlistData } = useIsShortlisted(isBrand && id ? id : undefined);
+  const addToShortlist = useAddToShortlist();
+  const removeFromShortlist = useRemoveFromShortlist();
+  const isShortlisted = shortlistData?.isShortlisted || false;
+  const isShortlistLoading = addToShortlist.isPending || removeFromShortlist.isPending;
   const createCollaboration = useCreateCollaboration();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [collabForm, setCollabForm] = useState({
@@ -110,9 +118,22 @@ export default function InfluencerProfileView() {
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 text-xl">
-                    <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-                    <span className="font-bold">{influencer.rating?.toFixed(1) || "N/A"}</span>
+                  <div className="flex items-center gap-3">
+                    {isBrand && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className={cn(isShortlisted && "text-red-500 border-red-500")}
+                        onClick={() => isShortlisted ? removeFromShortlist.mutate(influencer.id) : addToShortlist.mutate({ influencerId: influencer.id })}
+                        disabled={isShortlistLoading}
+                      >
+                        {isShortlistLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Heart className={cn("w-5 h-5", isShortlisted && "fill-current")} />}
+                      </Button>
+                    )}
+                    <div className="flex items-center gap-1 text-xl">
+                      <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                      <span className="font-bold">{influencer.rating?.toFixed(1) || "N/A"}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 mb-4">

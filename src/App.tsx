@@ -19,6 +19,8 @@ import BrandCollaborations from "./pages/brand/BrandCollaborations";
 import BrandAnalytics from "./pages/brand/BrandAnalytics";
 import BrandMessages from "./pages/brand/BrandMessages";
 import BrandOnboarding from "./pages/brand/BrandOnboarding";
+import BrandProfile from "./pages/brand/BrandProfile";
+import BrandShortlist from "./pages/brand/BrandShortlist";
 
 // Influencer pages
 import InfluencerDashboard from "./pages/influencer/InfluencerDashboard";
@@ -56,6 +58,8 @@ const App = () => (
             <Route path="/brand/analytics" element={<BrandAnalytics />} />
             <Route path="/brand/messages" element={<BrandMessages />} />
             <Route path="/brand/onboarding" element={<BrandOnboarding />} />
+            <Route path="/brand/profile" element={<BrandProfile />} />
+            <Route path="/brand/shortlist" element={<BrandShortlist />} />
 
             {/* Influencer Routes */}
             <Route path="/influencer/dashboard" element={<InfluencerDashboard />} />

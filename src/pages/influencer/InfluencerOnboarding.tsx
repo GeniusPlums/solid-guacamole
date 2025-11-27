@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { profilesApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +17,7 @@ const niches = [
 
 export default function InfluencerOnboarding() {
   const navigate = useNavigate();
-  const { user, refreshProfiles } = useAuth();
+  const { user, isLoading: authLoading, refreshProfiles, refreshSession } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
@@ -31,6 +30,13 @@ export default function InfluencerOnboarding() {
     location: "",
   });
 
+  // Refresh session on mount to ensure user is loaded after signup redirect
+  useEffect(() => {
+    if (!user && !authLoading) {
+      refreshSession();
+    }
+  }, [user, authLoading, refreshSession]);
+
   const toggleNiche = (niche: string) => {
     setSelectedNiches((prev) =>
       prev.includes(niche) ? prev.filter((n) => n !== niche) : [...prev, niche]
@@ -39,7 +45,6 @@ export default function InfluencerOnboarding() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
 
     if (selectedNiches.length === 0) {
       toast({
@@ -47,6 +52,16 @@ export default function InfluencerOnboarding() {
         description: "Please select at least one content niche.",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to complete your profile setup.",
+        variant: "destructive",
+      });
+      navigate("/auth?type=influencer");
       return;
     }
 

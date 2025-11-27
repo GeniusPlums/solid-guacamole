@@ -6,10 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Star, Instagram, Youtube, Twitter, LogOut, Loader2, Home } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Search, Star, Instagram, Youtube, Twitter, LogOut, Loader2, Home, Filter, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useInfluencers } from "@/hooks/useInfluencers";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAddToShortlist, useRemoveFromShortlist, useIsShortlisted } from "@/hooks/useShortlists";
+import { cn } from "@/lib/utils";
 
 function formatNumber(num: number): string {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -24,11 +28,19 @@ const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [niche, setNiche] = useState("all");
   const [platform, setPlatform] = useState("all");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [minFollowers, setMinFollowers] = useState(0);
+  const [minEngagement, setMinEngagement] = useState(0);
+  const [sortBy, setSortBy] = useState("rating");
+  const isBrand = profile?.userType === "brand";
 
   const { data: influencers, isLoading } = useInfluencers({
     search: searchQuery,
     niche: niche !== "all" ? niche : undefined,
     platform: platform !== "all" ? platform : undefined,
+    minFollowers: minFollowers > 0 ? minFollowers : undefined,
+    minEngagement: minEngagement > 0 ? minEngagement : undefined,
+    sortBy,
   });
 
   const handleSignOut = async () => {
@@ -128,7 +140,34 @@ const Marketplace = () => {
                   <SelectItem value="tiktok">TikTok</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant="outline" onClick={() => setShowAdvanced(!showAdvanced)}>
+                <Filter className="w-4 h-4 mr-2" />
+                {showAdvanced ? "Less" : "More"} Filters
+              </Button>
             </div>
+            {showAdvanced && (
+              <div className="grid md:grid-cols-3 gap-4 mt-4 pt-4 border-t">
+                <div className="space-y-2">
+                  <Label>Min Followers: {minFollowers > 0 ? formatNumber(minFollowers) : "Any"}</Label>
+                  <Slider value={[minFollowers]} onValueChange={([v]) => setMinFollowers(v)} min={0} max={1000000} step={10000} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Min Engagement: {minEngagement > 0 ? `${minEngagement}%` : "Any"}</Label>
+                  <Slider value={[minEngagement]} onValueChange={([v]) => setMinEngagement(v)} min={0} max={15} step={0.5} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sort By</Label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rating">Rating</SelectItem>
+                      <SelectItem value="followers">Followers</SelectItem>
+                      <SelectItem value="engagement">Engagement</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

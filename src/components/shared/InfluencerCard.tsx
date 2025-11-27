@@ -2,8 +2,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, Instagram, Youtube, Twitter } from "lucide-react";
+import { Star, Instagram, Youtube, Twitter, Heart, Loader2 } from "lucide-react";
 import { InfluencerWithProfile } from "@/hooks/useInfluencers";
+import { useIsShortlisted, useAddToShortlist, useRemoveFromShortlist } from "@/hooks/useShortlists";
+import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 interface InfluencerCardProps {
   influencer: InfluencerWithProfile;
@@ -12,6 +15,7 @@ interface InfluencerCardProps {
   showScore?: boolean;
   score?: number;
   matchReasons?: string[];
+  showShortlistButton?: boolean;
 }
 
 function formatNumber(num: number): string {
@@ -27,16 +31,33 @@ export function InfluencerCard({
   showScore,
   score,
   matchReasons,
+  showShortlistButton = true,
 }: InfluencerCardProps) {
+  const { profile } = useAuth();
+  const isBrand = profile?.userType === "brand";
+  const { data: shortlistData } = useIsShortlisted(isBrand ? influencer.id : undefined);
+  const addToShortlist = useAddToShortlist();
+  const removeFromShortlist = useRemoveFromShortlist();
+  const isShortlisted = shortlistData?.isShortlisted || false;
+  const isShortlistLoading = addToShortlist.isPending || removeFromShortlist.isPending;
+
   const totalFollowers =
     (influencer.instagram_followers || 0) +
     (influencer.youtube_subscribers || 0) +
     (influencer.twitter_followers || 0) +
     (influencer.tiktok_followers || 0);
 
-  // Handle demo profiles that don't have linked profiles table entry
   const displayName = influencer.profiles?.full_name || influencer.instagram_handle || "Influencer";
   const avatarUrl = influencer.profiles?.avatar_url || "";
+
+  const handleShortlistToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isShortlisted) {
+      removeFromShortlist.mutate(influencer.id);
+    } else {
+      addToShortlist.mutate({ influencerId: influencer.id });
+    }
+  };
 
   return (
     <Card className="hover:shadow-lg transition-all overflow-hidden">
@@ -52,9 +73,26 @@ export function InfluencerCard({
               <CardDescription>{influencer.niche?.join(", ") || "No niche set"}</CardDescription>
             </div>
           </div>
-          <div className="flex items-center space-x-1">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-semibold">{influencer.rating?.toFixed(1) || "N/A"}</span>
+          <div className="flex items-center gap-2">
+            {isBrand && showShortlistButton && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-8 w-8", isShortlisted && "text-red-500")}
+                onClick={handleShortlistToggle}
+                disabled={isShortlistLoading}
+              >
+                {isShortlistLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Heart className={cn("w-4 h-4", isShortlisted && "fill-current")} />
+                )}
+              </Button>
+            )}
+            <div className="flex items-center space-x-1">
+              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <span className="font-semibold">{influencer.rating?.toFixed(1) || "N/A"}</span>
+            </div>
           </div>
         </div>
         {showScore && score !== undefined && (

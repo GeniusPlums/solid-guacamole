@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,7 @@ const industries = [
 
 export default function BrandOnboarding() {
   const navigate = useNavigate();
-  const { user, refreshProfiles } = useAuth();
+  const { user, isLoading: authLoading, refreshProfiles, refreshSession } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -40,9 +40,44 @@ export default function BrandOnboarding() {
     description: "",
   });
 
+  // Refresh session on mount to ensure user is loaded after signup redirect
+  useEffect(() => {
+    if (!user && !authLoading) {
+      refreshSession();
+    }
+  }, [user, authLoading, refreshSession]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+
+    // Validate required fields
+    if (!formData.company_name.trim()) {
+      toast({
+        title: "Company name required",
+        description: "Please enter your company name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.industry) {
+      toast({
+        title: "Industry required",
+        description: "Please select your industry.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to complete your profile setup.",
+        variant: "destructive",
+      });
+      navigate("/auth?type=brand");
+      return;
+    }
 
     setIsLoading(true);
     try {
