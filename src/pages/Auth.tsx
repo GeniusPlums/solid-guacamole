@@ -60,7 +60,8 @@ const Auth = () => {
     const name = formData.get("name") as string;
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Step 1: Sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -68,16 +69,41 @@ const Auth = () => {
             name,
             user_type: type,
           },
-          emailRedirectTo: `${window.location.origin}/`,
         },
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+
+      // Step 2: Manually create the profile (bypassing trigger)
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: authData.user.id,
+            user_type: type as "brand" | "influencer",
+            full_name: name,
+            email: email,
+          });
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          // Don't throw - user is created, profile can be created later
+        }
+      }
 
       toast({
         title: "Success!",
         description: "Account created successfully. You can now sign in.",
       });
+
+      // Auto sign-in after signup
+      if (authData.session) {
+        if (type === "brand") {
+          navigate("/brand/onboarding");
+        } else {
+          navigate("/influencer/onboarding");
+        }
+      }
     } catch (error: any) {
       toast({
         title: "Error",
