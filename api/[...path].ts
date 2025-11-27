@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { eq, and, or, desc, asc } from 'drizzle-orm';
-import * as schema from '../src/db/schema';
+import * as schema from './schema';
 
 // Database setup
 const sql = neon(process.env.DATABASE_URL!);
