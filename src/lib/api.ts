@@ -1,5 +1,9 @@
 // API Client for Neon + Express backend
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// In production (Vercel), use relative /api path which routes to serverless functions
+// In development, use localhost:3001
+const API_URL = import.meta.env.PROD
+  ? '/api'
+  : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');
 
 // Token management
 const TOKEN_KEY = 'auth_token';
