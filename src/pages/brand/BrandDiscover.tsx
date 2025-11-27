@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { InfluencerCard } from "@/components/shared/InfluencerCard";
 import { useInfluencers } from "@/hooks/useInfluencers";
-import { scoreInfluencers, CampaignRequirements } from "@/lib/aiRecommendation";
-import { Search, Sparkles, Filter, Loader2 } from "lucide-react";
+import { useAIMatching, useNaturalLanguageSearch } from "@/hooks/useAI";
+import { CampaignRequirements } from "@/lib/aiRecommendation";
+import { Search, Sparkles, Filter, Loader2, Bot, Wand2 } from "lucide-react";
 
 const niches = [
   "Fashion", "Beauty", "Tech", "Gaming", "Fitness", "Food", "Travel",
@@ -23,13 +23,13 @@ const platforms = ["Instagram", "YouTube", "TikTok", "Twitter"];
 export default function BrandDiscover() {
   const navigate = useNavigate();
   const [showFilters, setShowFilters] = useState(false);
-  const [showAIWizard, setShowAIWizard] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [aiQuery, setAiQuery] = useState("");
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [followerRange, setFollowerRange] = useState([10000, 1000000]);
   const [minEngagement, setMinEngagement] = useState(2);
-  const [aiRequirements, setAiRequirements] = useState<CampaignRequirements | null>(null);
 
   const { data: influencers, isLoading } = useInfluencers({
     search: searchQuery,
@@ -39,14 +39,15 @@ export default function BrandDiscover() {
     minEngagement,
   });
 
-  const scoredInfluencers = aiRequirements && influencers
-    ? scoreInfluencers(influencers, aiRequirements)
-    : null;
+  const { results: aiResults, isAnalyzing, analyzeAndMatch, isAIEnabled } = useAIMatching();
+  const naturalLanguageSearch = useNaturalLanguageSearch();
 
-  const handleAISearch = () => {
-    setAiRequirements({
-      niche: selectedNiches,
-      platforms: selectedPlatforms,
+  const handleAISearch = async () => {
+    if (!influencers) return;
+
+    const requirements: CampaignRequirements = {
+      niche: selectedNiches.length > 0 ? selectedNiches : ["Lifestyle"],
+      platforms: selectedPlatforms.length > 0 ? selectedPlatforms : ["instagram"],
       minFollowers: followerRange[0],
       maxFollowers: followerRange[1],
       targetEngagement: minEngagement,
@@ -54,7 +55,40 @@ export default function BrandDiscover() {
       contentType: "mixed",
       targetAudience: "general",
       campaignGoal: "awareness",
-    });
+    };
+
+    await analyzeAndMatch(influencers, requirements);
+  };
+
+  const handleNaturalLanguageSearch = async () => {
+    if (!aiQuery.trim() || !influencers) return;
+
+    try {
+      const parsed = await naturalLanguageSearch.mutateAsync(aiQuery);
+      const requirements: CampaignRequirements = {
+        niche: parsed.niche || ["Lifestyle"],
+        platforms: parsed.platforms || ["instagram"],
+        minFollowers: parsed.minFollowers || 10000,
+        maxFollowers: parsed.maxFollowers || 1000000,
+        targetEngagement: parsed.targetEngagement || 3,
+        budget: parsed.budget || 10000,
+        contentType: "mixed",
+        targetAudience: "general",
+        campaignGoal: parsed.campaignGoal || "awareness",
+      };
+
+      // Update filters based on AI parsing
+      if (parsed.niche) setSelectedNiches(parsed.niche);
+      if (parsed.minFollowers && parsed.maxFollowers) {
+        setFollowerRange([parsed.minFollowers, parsed.maxFollowers]);
+      }
+      if (parsed.targetEngagement) setMinEngagement(parsed.targetEngagement);
+
+      await analyzeAndMatch(influencers, requirements);
+      setShowAIChat(false);
+    } catch (error) {
+      console.error("AI search error:", error);
+    }
   };
 
   const toggleNiche = (niche: string) => {
@@ -98,11 +132,48 @@ export default function BrandDiscover() {
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
               </Button>
-              <Button className="bg-gradient-primary" onClick={handleAISearch}>
-                <Sparkles className="w-4 h-4 mr-2" />
+              <Button variant="outline" onClick={() => setShowAIChat(!showAIChat)}>
+                <Bot className="w-4 h-4 mr-2" />
+                AI Chat
+              </Button>
+              <Button className="bg-gradient-primary" onClick={handleAISearch} disabled={isAnalyzing}>
+                {isAnalyzing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
                 AI Match
               </Button>
             </div>
+
+            {/* AI Chat Interface */}
+            {showAIChat && (
+              <div className="mt-6 pt-6 border-t">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium mb-1">AI Assistant</p>
+                    <p className="text-sm text-muted-foreground">
+                      Describe what you're looking for in natural language. For example: "I need fashion influencers with 50k-200k followers for a summer collection launch"
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Describe your ideal influencer match..."
+                    value={aiQuery}
+                    onChange={(e) => setAiQuery(e.target.value)}
+                    rows={2}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleNaturalLanguageSearch}
+                    disabled={naturalLanguageSearch.isPending || !aiQuery.trim()}
+                    className="bg-gradient-primary"
+                  >
+                    {naturalLanguageSearch.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {showFilters && (
               <div className="mt-6 pt-6 border-t space-y-6">
@@ -168,30 +239,40 @@ export default function BrandDiscover() {
         </Card>
 
         {/* AI Match Results */}
-        {scoredInfluencers && (
+        {aiResults.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold">AI-Recommended Matches</h2>
-              <span className="text-muted-foreground">({scoredInfluencers.length} found)</span>
+              <span className="text-muted-foreground">({aiResults.length} found)</span>
+              {isAIEnabled && <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">Gemini AI</span>}
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {scoredInfluencers.slice(0, 9).map((scored) => (
-                <InfluencerCard
-                  key={scored.influencer.id}
-                  influencer={scored.influencer}
-                  showScore
-                  score={scored.overallScore}
-                  matchReasons={scored.matchReasons}
-                  onViewProfile={() => navigate(`/influencer/${scored.influencer.id}`)}
-                />
+              {aiResults.slice(0, 9).map((scored) => (
+                <Card key={scored.influencer.id} className="hover:shadow-lg transition-all overflow-hidden">
+                  <InfluencerCard
+                    influencer={scored.influencer}
+                    showScore
+                    score={scored.overallScore}
+                    matchReasons={scored.aiExplanation ? [scored.aiExplanation] : scored.matchReasons}
+                    onViewProfile={() => navigate(`/influencer/${scored.influencer.id}`)}
+                  />
+                  {scored.isLoadingExplanation && (
+                    <div className="px-4 pb-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span>Generating AI insight...</span>
+                      </div>
+                    </div>
+                  )}
+                </Card>
               ))}
             </div>
           </div>
         )}
 
         {/* Regular Results */}
-        {!scoredInfluencers && (
+        {aiResults.length === 0 && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">
               {isLoading ? "Searching..." : `All Influencers (${influencers?.length || 0})`}
