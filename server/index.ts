@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { authRouter } from './routes/auth';
 import { profilesRouter } from './routes/profiles';
 import { campaignsRouter } from './routes/campaigns';
@@ -13,10 +12,6 @@ import { shortlistsRouter } from './routes/shortlists';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Get __dirname equivalent for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(cors({
@@ -44,7 +39,12 @@ app.get('/api/health', (req, res) => {
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
-  const staticPath = path.join(__dirname, '../../dist');
+  // Use process.cwd() since __dirname is not available in bundled CJS from ESM source
+  // In Docker, WORKDIR is /app, and static files are in /app/dist
+  const staticPath = path.join(process.cwd(), 'dist');
+
+  console.log(`📁 Serving static files from: ${staticPath}`);
+
   app.use(express.static(staticPath));
 
   // Handle client-side routing - serve index.html for all non-API routes
