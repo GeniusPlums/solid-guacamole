@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/shared/StatCard";
+import { AIChatbot } from "@/components/shared/AIChatbot";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCollaborations } from "@/hooks/useCollaborations";
 import { Star, Briefcase, DollarSign, BarChart3, ArrowRight, User, MessageSquare } from "lucide-react";
@@ -214,6 +215,13 @@ export default function InfluencerDashboard() {
           </Card>
         </div>
       </div>
+
+      {/* AI Chatbot */}
+      <AIChatbot
+        userType="influencer"
+        userName={profile?.fullName}
+        influencerInfo={influencerProfile}
+      />
     </DashboardLayout>
   );
 }

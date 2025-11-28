@@ -4,17 +4,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/shared/StatCard";
+import { AIChatbot } from "@/components/shared/AIChatbot";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCampaigns } from "@/hooks/useCampaigns";
 import { useCollaborations } from "@/hooks/useCollaborations";
+import { useInfluencers } from "@/hooks/useInfluencers";
 import { Search, TrendingUp, Users, Target, MessageSquare, Zap, ArrowRight } from "lucide-react";
+import type { InfluencerData } from "@/lib/gemini";
 
 export default function BrandDashboard() {
   const navigate = useNavigate();
   const { user, profile, brandProfile, isLoading, isAuthenticated } = useAuth();
   const { data: campaigns } = useCampaigns();
   const { data: collaborations } = useCollaborations();
+  const { data: influencersData } = useInfluencers();
   const [hasRedirected, setHasRedirected] = useState(false);
+
+  // Transform influencers data for chatbot context
+  const influencersForChat: InfluencerData[] = (influencersData || []).map((inf) => ({
+    id: inf.id,
+    name: inf.profile?.fullName || inf.profiles?.fullName || 'Unknown',
+    bio: inf.bio || '',
+    niche: inf.niche || [],
+    instagramFollowers: inf.instagramFollowers || 0,
+    youtubeSubscribers: inf.youtubeSubscribers || 0,
+    twitterFollowers: inf.twitterFollowers || 0,
+    tiktokFollowers: inf.tiktokFollowers || 0,
+    engagementRate: inf.engagementRate || 0,
+    rating: inf.rating || 0,
+    location: inf.location || '',
+    languages: inf.languages || [],
+  }));
 
   useEffect(() => {
     // Wait for auth loading to complete before making any redirect decisions
@@ -193,6 +213,14 @@ export default function BrandDashboard() {
           </Card>
         </div>
       </div>
+
+      {/* AI Chatbot */}
+      <AIChatbot
+        userType="brand"
+        userName={brandProfile?.company_name || profile?.full_name}
+        influencers={influencersForChat}
+        brandInfo={brandProfile}
+      />
     </DashboardLayout>
   );
 }
