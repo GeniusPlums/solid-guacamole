@@ -79,15 +79,17 @@ export const authApi = {
         token: string;
         expiresAt: string;
       };
+      brandProfile?: any;
+      influencerProfile?: any;
     }>('/auth/signin', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    
+
     if (result.session?.token) {
       setToken(result.session.token);
     }
-    
+
     return result;
   },
 
@@ -175,6 +177,20 @@ export const campaignsApi = {
     return fetchApi(`/campaigns/${id}`, {
       method: 'DELETE',
     });
+  },
+};
+
+// Campaign Discovery API (for influencers)
+export const campaignDiscoveryApi = {
+  async getAll(params?: { search?: string; niche?: string; minBudget?: number; maxBudget?: number }) {
+    const searchParams = new URLSearchParams();
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.niche) searchParams.set('niche', params.niche);
+    if (params?.minBudget) searchParams.set('minBudget', params.minBudget.toString());
+    if (params?.maxBudget) searchParams.set('maxBudget', params.maxBudget.toString());
+
+    const query = searchParams.toString();
+    return fetchApi<any[]>(`/campaigns/discover${query ? `?${query}` : ''}`);
   },
 };
 

@@ -41,14 +41,16 @@ export function InfluencerCard({
   const isShortlisted = shortlistData?.isShortlisted || false;
   const isShortlistLoading = addToShortlist.isPending || removeFromShortlist.isPending;
 
+  // Support both camelCase (from API) and snake_case (legacy) field names
   const totalFollowers =
-    (influencer.instagram_followers || 0) +
-    (influencer.youtube_subscribers || 0) +
-    (influencer.twitter_followers || 0) +
-    (influencer.tiktok_followers || 0);
+    (influencer.instagramFollowers || influencer.instagram_followers || 0) +
+    (influencer.youtubeSubscribers || influencer.youtube_subscribers || 0) +
+    (influencer.twitterFollowers || influencer.twitter_followers || 0) +
+    (influencer.tiktokFollowers || influencer.tiktok_followers || 0);
 
-  const displayName = influencer.profiles?.full_name || influencer.instagram_handle || "Influencer";
-  const avatarUrl = influencer.profiles?.avatar_url || "";
+  // Support both naming conventions for profile data
+  const displayName = influencer.profile?.fullName || influencer.profiles?.full_name || influencer.instagramHandle || influencer.instagram_handle || "Influencer";
+  const avatarUrl = influencer.profile?.avatarUrl || influencer.profiles?.avatar_url || "";
 
   const handleShortlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -122,27 +124,27 @@ export function InfluencerCard({
           </div>
           <div>
             <p className="text-muted-foreground">Engagement</p>
-            <p className="font-semibold">{influencer.engagement_rate || 0}%</p>
+            <p className="font-semibold">{influencer.engagementRate || influencer.engagement_rate || 0}%</p>
           </div>
         </div>
 
         <div className="flex items-center flex-wrap gap-2">
-          {influencer.instagram_handle && (
+          {(influencer.instagramHandle || influencer.instagram_handle) && (
             <Badge variant="secondary" className="text-xs">
               <Instagram className="w-3 h-3 mr-1" />
-              {formatNumber(influencer.instagram_followers || 0)}
+              {formatNumber(influencer.instagramFollowers || influencer.instagram_followers || 0)}
             </Badge>
           )}
-          {influencer.youtube_handle && (
+          {(influencer.youtubeHandle || influencer.youtube_handle) && (
             <Badge variant="secondary" className="text-xs">
               <Youtube className="w-3 h-3 mr-1" />
-              {formatNumber(influencer.youtube_subscribers || 0)}
+              {formatNumber(influencer.youtubeSubscribers || influencer.youtube_subscribers || 0)}
             </Badge>
           )}
-          {influencer.twitter_handle && (
+          {(influencer.twitterHandle || influencer.twitter_handle) && (
             <Badge variant="secondary" className="text-xs">
               <Twitter className="w-3 h-3 mr-1" />
-              {formatNumber(influencer.twitter_followers || 0)}
+              {formatNumber(influencer.twitterFollowers || influencer.twitter_followers || 0)}
             </Badge>
           )}
         </div>

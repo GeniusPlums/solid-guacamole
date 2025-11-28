@@ -63,6 +63,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const influencerNavItems = [
     { path: "/influencer/dashboard", icon: Home, label: "Dashboard" },
+    { path: "/influencer/discover", icon: Search, label: "Discover" },
     { path: "/influencer/profile", icon: User, label: "Profile" },
     { path: "/influencer/collaborations", icon: Briefcase, label: "Collaborations" },
     { path: "/influencer/calendar", icon: Calendar, label: "Calendar" },

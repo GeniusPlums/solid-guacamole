@@ -30,6 +30,7 @@ import InfluencerCalendar from "./pages/influencer/InfluencerCalendar";
 import InfluencerAnalytics from "./pages/influencer/InfluencerAnalytics";
 import InfluencerMessages from "./pages/influencer/InfluencerMessages";
 import InfluencerOnboarding from "./pages/influencer/InfluencerOnboarding";
+import InfluencerDiscover from "./pages/influencer/InfluencerDiscover";
 
 // Shared pages
 import InfluencerProfileView from "./pages/shared/InfluencerProfileView";
@@ -63,6 +64,7 @@ const App = () => (
 
             {/* Influencer Routes */}
             <Route path="/influencer/dashboard" element={<InfluencerDashboard />} />
+            <Route path="/influencer/discover" element={<InfluencerDiscover />} />
             <Route path="/influencer/profile" element={<InfluencerProfile />} />
             <Route path="/influencer/collaborations" element={<InfluencerCollaborations />} />
             <Route path="/influencer/calendar" element={<InfluencerCalendar />} />

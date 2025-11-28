@@ -100,8 +100,9 @@ const Auth = () => {
         throw new Error('Invalid credentials');
       }
 
-      // Update auth context with the new user before navigation
-      await setUserFromLogin(result.session?.user);
+      // Update auth context with the new user and profiles before navigation
+      // This avoids an extra API call to fetch profiles
+      await setUserFromLogin(result.session?.user, result.brandProfile, result.influencerProfile);
 
       toast({
         title: "Welcome back!",

@@ -11,15 +11,17 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { profilesApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Instagram, Youtube, Save, Star, Users, TrendingUp } from "lucide-react";
+import { Loader2, Instagram, Youtube, Save, Star, Users, TrendingUp, Plus, X, ExternalLink } from "lucide-react";
 
-const niches = ["Fashion", "Beauty", "Tech", "Gaming", "Fitness", "Food", "Travel", "Lifestyle", "Music", "Art", "Business", "Education"];
+const niches = ["Fashion", "Beauty", "Tech", "Gaming", "Fitness", "Food", "Travel", "Lifestyle", "Music", "Art", "Business", "Education", "Finance"];
 
 export default function InfluencerProfile() {
   const { profile, influencerProfile, refreshProfiles } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedNiches, setSelectedNiches] = useState<string[]>(influencerProfile?.niche || []);
+  const [portfolioLinks, setPortfolioLinks] = useState<string[]>(influencerProfile?.contentSamples || []);
+  const [newPortfolioLink, setNewPortfolioLink] = useState("");
   const [formData, setFormData] = useState({
     bio: influencerProfile?.bio || "",
     instagramHandle: influencerProfile?.instagramHandle || "",
@@ -37,6 +39,7 @@ export default function InfluencerProfile() {
   useEffect(() => {
     if (influencerProfile) {
       setSelectedNiches(influencerProfile.niche || []);
+      setPortfolioLinks(influencerProfile.contentSamples || []);
       setFormData({
         bio: influencerProfile.bio || "",
         instagramHandle: influencerProfile.instagramHandle || "",
@@ -52,6 +55,22 @@ export default function InfluencerProfile() {
       });
     }
   }, [influencerProfile]);
+
+  const addPortfolioLink = () => {
+    if (newPortfolioLink.trim()) {
+      // Auto-prepend https:// if not provided
+      let link = newPortfolioLink.trim();
+      if (!link.match(/^https?:\/\//i)) {
+        link = `https://${link}`;
+      }
+      setPortfolioLinks([...portfolioLinks, link]);
+      setNewPortfolioLink("");
+    }
+  };
+
+  const removePortfolioLink = (index: number) => {
+    setPortfolioLinks(portfolioLinks.filter((_, i) => i !== index));
+  };
 
   const toggleNiche = (niche: string) => {
     setSelectedNiches((prev) => prev.includes(niche) ? prev.filter((n) => n !== niche) : [...prev, niche]);
@@ -74,6 +93,7 @@ export default function InfluencerProfile() {
         tiktokFollowers: formData.tiktokFollowers ? parseInt(formData.tiktokFollowers) : null,
         engagementRate: formData.engagementRate ? parseFloat(formData.engagementRate) : null,
         location: formData.location || null,
+        contentSamples: portfolioLinks.length > 0 ? portfolioLinks : null,
       });
 
       await refreshProfiles();
@@ -163,7 +183,59 @@ export default function InfluencerProfile() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="portfolio"><Card><CardHeader><CardTitle>Portfolio</CardTitle><CardDescription>Showcase your best work</CardDescription></CardHeader><CardContent><div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground">Portfolio upload coming soon. Add links to your best content samples.</div></CardContent></Card></TabsContent>
+          <TabsContent value="portfolio">
+            <Card>
+              <CardHeader>
+                <CardTitle>Portfolio</CardTitle>
+                <CardDescription>Showcase your best work with links to your content</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add a link to your content (e.g., instagram.com/p/abc123)"
+                    value={newPortfolioLink}
+                    onChange={(e) => setNewPortfolioLink(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addPortfolioLink())}
+                  />
+                  <Button onClick={addPortfolioLink} disabled={!newPortfolioLink.trim()}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">https:// will be added automatically if not provided</p>
+
+                {portfolioLinks.length > 0 ? (
+                  <div className="space-y-2">
+                    {portfolioLinks.map((link, index) => (
+                      <div key={index} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                        <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <a
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 text-sm text-primary hover:underline truncate"
+                        >
+                          {link}
+                        </a>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 flex-shrink-0"
+                          onClick={() => removePortfolioLink(index)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground">
+                    No portfolio links added yet. Add links to your best content samples above.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>

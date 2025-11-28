@@ -14,7 +14,7 @@ import { useCampaigns, useCreateCampaign } from "@/hooks/useCampaigns";
 import { useCreateCollaboration } from "@/hooks/useCollaborations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Star, Instagram, Youtube, Twitter, MapPin, Users, TrendingUp, ArrowLeft, MessageSquare, Send, Loader2, Heart } from "lucide-react";
+import { Star, Instagram, Youtube, Twitter, MapPin, Users, TrendingUp, ArrowLeft, MessageSquare, Send, Loader2, Heart, ExternalLink, Link } from "lucide-react";
 import { useIsShortlisted, useAddToShortlist, useRemoveFromShortlist } from "@/hooks/useShortlists";
 import { cn } from "@/lib/utils";
 
@@ -40,12 +40,15 @@ export default function InfluencerProfileView() {
   const createCollaboration = useCreateCollaboration();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [collabForm, setCollabForm] = useState({
-    campaign_id: "",
-    offered_amount: "",
+    campaignId: "",
+    offeredAmount: "",
     deliverables: "",
     deadline: "",
     notes: "",
   });
+
+  // Check if there are any campaigns available
+  const hasCampaigns = campaigns && campaigns.length > 0;
 
   if (isLoading) {
     return (
@@ -63,30 +66,32 @@ export default function InfluencerProfileView() {
     );
   }
 
-  const totalFollowers = (influencer.instagram_followers || 0) + (influencer.youtube_subscribers || 0) + (influencer.twitter_followers || 0);
+  // Support both camelCase (from API) and snake_case (legacy) field names
+  const totalFollowers =
+    (influencer.instagramFollowers || influencer.instagram_followers || 0) +
+    (influencer.youtubeSubscribers || influencer.youtube_subscribers || 0) +
+    (influencer.twitterFollowers || influencer.twitter_followers || 0);
 
-  // Handle demo profiles that don't have linked profiles table entry
-  const displayName = influencer.profiles?.full_name || influencer.instagram_handle || "Influencer";
-  const avatarUrl = influencer.profiles?.avatar_url || "";
+  // Handle demo profiles that don't have linked profiles table entry - support both naming conventions
+  const displayName = influencer.profile?.fullName || influencer.profiles?.full_name || influencer.instagramHandle || influencer.instagram_handle || "Influencer";
+  const avatarUrl = influencer.profile?.avatarUrl || influencer.profiles?.avatar_url || "";
 
   const handleSendRequest = async () => {
-    if (!brandProfile || !collabForm.campaign_id) return;
+    if (!brandProfile || !collabForm.campaignId) return;
 
     try {
       await createCollaboration.mutateAsync({
-        campaign_id: collabForm.campaign_id,
-        influencer_id: influencer.id,
-        brand_id: brandProfile.id,
-        offered_amount: collabForm.offered_amount ? parseFloat(collabForm.offered_amount) : null,
-        deliverables: collabForm.deliverables || null,
-        deadline: collabForm.deadline || null,
-        notes: collabForm.notes || null,
-        status: "pending",
+        campaignId: collabForm.campaignId,
+        influencerId: influencer.id,
+        offeredAmount: collabForm.offeredAmount ? parseFloat(collabForm.offeredAmount) : undefined,
+        deliverables: collabForm.deliverables || undefined,
+        deadline: collabForm.deadline || undefined,
+        notes: collabForm.notes || undefined,
       });
 
       toast({ title: "Request sent!", description: "The influencer will be notified of your collaboration request." });
       setIsDialogOpen(false);
-      setCollabForm({ campaign_id: "", offered_amount: "", deliverables: "", deadline: "", notes: "" });
+      setCollabForm({ campaignId: "", offeredAmount: "", deliverables: "", deadline: "", notes: "" });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -147,11 +152,11 @@ export default function InfluencerProfileView() {
                   </div>
                   <div className="p-3 bg-muted rounded-lg">
                     <div className="flex items-center justify-center gap-1 mb-1"><TrendingUp className="w-4 h-4" /></div>
-                    <p className="text-2xl font-bold">{influencer.engagement_rate || 0}%</p>
+                    <p className="text-2xl font-bold">{influencer.engagementRate || influencer.engagement_rate || 0}%</p>
                     <p className="text-xs text-muted-foreground">Engagement</p>
                   </div>
                   <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-2xl font-bold">{influencer.total_collaborations || 0}</p>
+                    <p className="text-2xl font-bold">{influencer.totalCollaborations || influencer.total_collaborations || 0}</p>
                     <p className="text-xs text-muted-foreground">Collaborations</p>
                   </div>
                 </div>
@@ -168,18 +173,31 @@ export default function InfluencerProfileView() {
                       <div className="space-y-4 mt-4">
                         <div className="space-y-2">
                           <Label>Select Campaign *</Label>
-                          <Select value={collabForm.campaign_id} onValueChange={(v) => setCollabForm({ ...collabForm, campaign_id: v })}>
-                            <SelectTrigger><SelectValue placeholder="Choose a campaign" /></SelectTrigger>
-                            <SelectContent>{campaigns?.map((c) => (<SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>))}</SelectContent>
+                          <Select value={collabForm.campaignId} onValueChange={(v) => setCollabForm({ ...collabForm, campaignId: v })} disabled={!hasCampaigns}>
+                            <SelectTrigger><SelectValue placeholder={hasCampaigns ? "Choose a campaign" : "No campaigns available"} /></SelectTrigger>
+                            <SelectContent>
+                              {hasCampaigns ? (
+                                campaigns.map((c) => (<SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>))
+                              ) : (
+                                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                                  No campaigns available. Create a campaign first.
+                                </div>
+                              )}
+                            </SelectContent>
                           </Select>
+                          {!hasCampaigns && (
+                            <p className="text-xs text-muted-foreground">
+                              <Button variant="link" className="h-auto p-0 text-xs" onClick={() => navigate("/brand/campaigns")}>Create a campaign</Button> to send collaboration requests.
+                            </p>
+                          )}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2"><Label>Offer Amount ($)</Label><Input type="number" value={collabForm.offered_amount} onChange={(e) => setCollabForm({ ...collabForm, offered_amount: e.target.value })} placeholder="5000" /></div>
+                          <div className="space-y-2"><Label>Offer Amount ($)</Label><Input type="number" value={collabForm.offeredAmount} onChange={(e) => setCollabForm({ ...collabForm, offeredAmount: e.target.value })} placeholder="5000" /></div>
                           <div className="space-y-2"><Label>Deadline</Label><Input type="date" value={collabForm.deadline} onChange={(e) => setCollabForm({ ...collabForm, deadline: e.target.value })} /></div>
                         </div>
                         <div className="space-y-2"><Label>Deliverables</Label><Textarea value={collabForm.deliverables} onChange={(e) => setCollabForm({ ...collabForm, deliverables: e.target.value })} placeholder="2 Instagram posts, 1 Story..." /></div>
                         <div className="space-y-2"><Label>Message to Influencer</Label><Textarea value={collabForm.notes} onChange={(e) => setCollabForm({ ...collabForm, notes: e.target.value })} placeholder="Tell them about your campaign..." /></div>
-                        <Button className="w-full bg-gradient-primary" onClick={handleSendRequest} disabled={!collabForm.campaign_id || createCollaboration.isPending}>{createCollaboration.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Send Request</Button>
+                        <Button className="w-full bg-gradient-primary" onClick={handleSendRequest} disabled={!collabForm.campaignId || createCollaboration.isPending}>{createCollaboration.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Send Request</Button>
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -198,12 +216,40 @@ export default function InfluencerProfileView() {
           <Card>
             <CardHeader><CardTitle>Social Media</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              {influencer.instagram_handle && (<div className="flex items-center justify-between p-2 rounded-lg bg-muted"><div className="flex items-center gap-2"><Instagram className="w-5 h-5 text-pink-500" /><span>@{influencer.instagram_handle}</span></div><span className="font-medium">{formatNumber(influencer.instagram_followers || 0)}</span></div>)}
-              {influencer.youtube_handle && (<div className="flex items-center justify-between p-2 rounded-lg bg-muted"><div className="flex items-center gap-2"><Youtube className="w-5 h-5 text-red-500" /><span>{influencer.youtube_handle}</span></div><span className="font-medium">{formatNumber(influencer.youtube_subscribers || 0)}</span></div>)}
-              {influencer.twitter_handle && (<div className="flex items-center justify-between p-2 rounded-lg bg-muted"><div className="flex items-center gap-2"><Twitter className="w-5 h-5 text-blue-500" /><span>@{influencer.twitter_handle}</span></div><span className="font-medium">{formatNumber(influencer.twitter_followers || 0)}</span></div>)}
+              {(influencer.instagramHandle || influencer.instagram_handle) && (<div className="flex items-center justify-between p-2 rounded-lg bg-muted"><div className="flex items-center gap-2"><Instagram className="w-5 h-5 text-pink-500" /><span>@{influencer.instagramHandle || influencer.instagram_handle}</span></div><span className="font-medium">{formatNumber(influencer.instagramFollowers || influencer.instagram_followers || 0)}</span></div>)}
+              {(influencer.youtubeHandle || influencer.youtube_handle) && (<div className="flex items-center justify-between p-2 rounded-lg bg-muted"><div className="flex items-center gap-2"><Youtube className="w-5 h-5 text-red-500" /><span>{influencer.youtubeHandle || influencer.youtube_handle}</span></div><span className="font-medium">{formatNumber(influencer.youtubeSubscribers || influencer.youtube_subscribers || 0)}</span></div>)}
+              {(influencer.twitterHandle || influencer.twitter_handle) && (<div className="flex items-center justify-between p-2 rounded-lg bg-muted"><div className="flex items-center gap-2"><Twitter className="w-5 h-5 text-blue-500" /><span>@{influencer.twitterHandle || influencer.twitter_handle}</span></div><span className="font-medium">{formatNumber(influencer.twitterFollowers || influencer.twitter_followers || 0)}</span></div>)}
             </CardContent>
           </Card>
         </div>
+
+        {/* Portfolio Links */}
+        {influencer.content_samples && influencer.content_samples.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Link className="w-5 h-5" />
+                Portfolio
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-3">
+                {influencer.content_samples.map((link: string, index: number) => (
+                  <a
+                    key={index}
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm text-primary truncate">{link}</span>
+                  </a>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

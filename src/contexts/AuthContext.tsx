@@ -24,7 +24,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   refreshProfiles: () => Promise<void>;
   refreshSession: () => Promise<void>;
-  setUserFromLogin: (sessionUser: any) => Promise<void>;
+  setUserFromLogin: (sessionUser: any, brandProfile?: any, influencerProfile?: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -102,7 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfiles]);
 
   // Set user directly after login (to avoid race condition with navigation)
-  const setUserFromLogin = useCallback(async (sessionUser: any) => {
+  // Now accepts optional brandProfile and influencerProfile to avoid extra API call
+  const setUserFromLogin = useCallback(async (sessionUser: any, brandProfileData?: any, influencerProfileData?: any) => {
     if (sessionUser) {
       setUser({
         id: sessionUser.id,
@@ -114,8 +115,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setIsAuthenticated(true);
       setIsLoading(false);
-      // Fetch profiles in background
-      fetchProfiles();
+
+      // If profiles were provided with login response, use them directly
+      if (sessionUser.profile) {
+        setProfile({
+          id: sessionUser.profile.id,
+          email: sessionUser.profile.email,
+          fullName: sessionUser.profile.fullName,
+          userType: sessionUser.profile.userType,
+          avatarUrl: sessionUser.profile.avatarUrl,
+        } as Profile);
+      }
+
+      if (brandProfileData) {
+        setBrandProfile(brandProfileData);
+        setInfluencerProfile(null);
+      } else if (influencerProfileData) {
+        setInfluencerProfile(influencerProfileData);
+        setBrandProfile(null);
+      } else {
+        // Fetch profiles in background only if not provided
+        fetchProfiles();
+      }
     }
   }, [fetchProfiles]);
 

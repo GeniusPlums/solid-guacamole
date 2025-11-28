@@ -12,7 +12,7 @@ import { Loader2, Sparkles } from "lucide-react";
 
 const niches = [
   "Fashion", "Beauty", "Tech", "Gaming", "Fitness", "Food",
-  "Travel", "Lifestyle", "Music", "Art", "Business", "Education"
+  "Travel", "Lifestyle", "Music", "Art", "Business", "Education", "Finance"
 ];
 
 export default function InfluencerOnboarding() {

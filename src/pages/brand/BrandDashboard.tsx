@@ -70,6 +70,27 @@ export default function BrandDashboard() {
   const pendingCollabs = collaborations?.filter((c) => c.status === "pending").length || 0;
   const activeCollabs = collaborations?.filter((c) => c.status === "accepted").length || 0;
 
+  // Calculate total reach from active/accepted collaborations
+  const totalReach = collaborations
+    ?.filter((c) => c.status === "accepted" || c.status === "completed")
+    .reduce((sum, collab) => {
+      const influencer = collab.influencer_profiles || collab.influencer;
+      if (influencer) {
+        const reach = (influencer.instagramFollowers || influencer.instagram_followers || 0) +
+                      (influencer.youtubeSubscribers || influencer.youtube_subscribers || 0) +
+                      (influencer.twitterFollowers || influencer.twitter_followers || 0) +
+                      (influencer.tiktokFollowers || influencer.tiktok_followers || 0);
+        return sum + reach;
+      }
+      return sum;
+    }, 0) || 0;
+
+  const formatReach = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
+    return num.toString();
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -114,9 +135,10 @@ export default function BrandDashboard() {
           />
           <StatCard
             title="Total Reach"
-            value="0"
+            value={formatReach(totalReach)}
             description="Combined influencer reach"
             icon={TrendingUp}
+            onClick={() => navigate("/brand/collaborations")}
           />
         </div>
 

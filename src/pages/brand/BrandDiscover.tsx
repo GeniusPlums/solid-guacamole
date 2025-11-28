@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,18 +10,38 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { InfluencerCard } from "@/components/shared/InfluencerCard";
 import { useInfluencers } from "@/hooks/useInfluencers";
 import { useAIMatching, useNaturalLanguageSearch } from "@/hooks/useAI";
+import { useAuth } from "@/contexts/AuthContext";
 import { CampaignRequirements } from "@/lib/aiRecommendation";
 import { Search, Sparkles, Filter, Loader2, Bot, Wand2 } from "lucide-react";
 
+// Map brand industries to relevant influencer niches
+const industryToNichesMap: Record<string, string[]> = {
+  "Technology": ["Tech", "Gaming", "Business", "Education"],
+  "Fashion & Apparel": ["Fashion", "Lifestyle", "Beauty"],
+  "Beauty & Cosmetics": ["Beauty", "Fashion", "Lifestyle"],
+  "Food & Beverage": ["Food", "Lifestyle", "Fitness"],
+  "Health & Fitness": ["Fitness", "Lifestyle", "Food"],
+  "Travel & Tourism": ["Travel", "Lifestyle", "Food"],
+  "Entertainment": ["Entertainment", "Music", "Art", "Gaming"],
+  "Finance": ["Finance", "Business", "Education"],
+  "Education": ["Education", "Business", "Tech"],
+  "E-commerce": ["Lifestyle", "Fashion", "Tech"],
+  "Gaming": ["Gaming", "Tech", "Entertainment"],
+  "Automotive": ["Tech", "Lifestyle", "Business"],
+  "Real Estate": ["Business", "Lifestyle", "Finance"],
+  "Other": ["Lifestyle"],
+};
+
 const niches = [
   "Fashion", "Beauty", "Tech", "Gaming", "Fitness", "Food", "Travel",
-  "Lifestyle", "Music", "Art", "Business", "Education", "Entertainment"
+  "Lifestyle", "Music", "Art", "Business", "Education", "Entertainment", "Finance"
 ];
 
 const platforms = ["Instagram", "YouTube", "TikTok", "Twitter"];
 
 export default function BrandDiscover() {
   const navigate = useNavigate();
+  const { brandProfile } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,6 +50,18 @@ export default function BrandDiscover() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [followerRange, setFollowerRange] = useState([10000, 1000000]);
   const [minEngagement, setMinEngagement] = useState(2);
+  const [hasAutoMatchedNiches, setHasAutoMatchedNiches] = useState(false);
+
+  // Auto-select niches based on brand's industry when component mounts
+  useEffect(() => {
+    if (brandProfile?.industry && !hasAutoMatchedNiches) {
+      const suggestedNiches = industryToNichesMap[brandProfile.industry] || [];
+      if (suggestedNiches.length > 0) {
+        setSelectedNiches(suggestedNiches);
+        setHasAutoMatchedNiches(true);
+      }
+    }
+  }, [brandProfile?.industry, hasAutoMatchedNiches]);
 
   const { data: influencers, isLoading } = useInfluencers({
     search: searchQuery,
@@ -45,8 +77,13 @@ export default function BrandDiscover() {
   const handleAISearch = async () => {
     if (!influencers) return;
 
+    // Use brand's industry to suggest niches if none selected
+    const industryNiches = brandProfile?.industry
+      ? industryToNichesMap[brandProfile.industry] || ["Lifestyle"]
+      : ["Lifestyle"];
+
     const requirements: CampaignRequirements = {
-      niche: selectedNiches.length > 0 ? selectedNiches : ["Lifestyle"],
+      niche: selectedNiches.length > 0 ? selectedNiches : industryNiches,
       platforms: selectedPlatforms.length > 0 ? selectedPlatforms : ["instagram"],
       minFollowers: followerRange[0],
       maxFollowers: followerRange[1],

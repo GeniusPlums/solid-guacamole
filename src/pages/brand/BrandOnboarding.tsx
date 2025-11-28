@@ -99,10 +99,16 @@ export default function BrandOnboarding() {
 
     setIsLoading(true);
     try {
+      // Normalize website URL - auto-prepend https:// if not provided
+      let normalizedWebsite = formData.website?.trim();
+      if (normalizedWebsite && !normalizedWebsite.match(/^https?:\/\//i)) {
+        normalizedWebsite = `https://${normalizedWebsite}`;
+      }
+
       await profilesApi.saveBrandProfile({
         companyName: formData.company_name,
         industry: formData.industry,
-        website: formData.website || undefined,
+        website: normalizedWebsite || undefined,
         description: formData.description || undefined,
       });
 
@@ -200,12 +206,13 @@ export default function BrandOnboarding() {
               <Label htmlFor="website">Website</Label>
               <Input
                 id="website"
-                type="url"
-                placeholder="https://example.com"
+                type="text"
+                placeholder="example.com"
                 value={formData.website}
                 onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                 disabled={isLoading}
               />
+              <p className="text-xs text-muted-foreground">https:// will be added automatically if not provided</p>
             </div>
 
             <div className="space-y-2">
