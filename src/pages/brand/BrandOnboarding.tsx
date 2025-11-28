@@ -30,9 +30,10 @@ const industries = [
 
 export default function BrandOnboarding() {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, refreshProfiles, refreshSession } = useAuth();
+  const { user, isLoading: authLoading, isAuthenticated, refreshProfiles, brandProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
   const [formData, setFormData] = useState({
     company_name: "",
     industry: "",
@@ -40,12 +41,29 @@ export default function BrandOnboarding() {
     description: "",
   });
 
-  // Refresh session on mount to ensure user is loaded after signup redirect
+  // Redirect logic - must wait for auth loading to complete
   useEffect(() => {
-    if (!user && !authLoading) {
-      refreshSession();
+    if (authLoading) {
+      return;
     }
-  }, [user, authLoading, refreshSession]);
+
+    if (hasRedirected) {
+      return;
+    }
+
+    // Not authenticated - redirect to auth
+    if (!isAuthenticated || !user) {
+      setHasRedirected(true);
+      navigate("/auth?type=brand", { replace: true });
+      return;
+    }
+
+    // Already has brand profile - redirect to dashboard
+    if (brandProfile) {
+      setHasRedirected(true);
+      navigate("/brand/dashboard", { replace: true });
+    }
+  }, [authLoading, isAuthenticated, user, brandProfile, navigate, hasRedirected]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +113,7 @@ export default function BrandOnboarding() {
         description: "Your brand profile has been created successfully.",
       });
 
-      navigate("/brand/dashboard");
+      navigate("/brand/dashboard", { replace: true });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -106,6 +124,30 @@ export default function BrandOnboarding() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading if not authenticated (will redirect)
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">

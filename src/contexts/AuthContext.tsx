@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { authApi, profilesApi, getToken } from "@/lib/api";
 import type { Profile, InfluencerProfile, BrandProfile } from "@/db/types";
 
@@ -20,9 +20,11 @@ interface AuthContextType {
   influencerProfile: InfluencerProfile | null;
   brandProfile: BrandProfile | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
   signOut: () => Promise<void>;
   refreshProfiles: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  setUserFromLogin: (sessionUser: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,8 +35,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [influencerProfile, setInfluencerProfile] = useState<InfluencerProfile | null>(null);
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
     try {
       const data = await profilesApi.getMe();
 
@@ -52,17 +55,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Failed to fetch profiles:", error);
     }
-  };
+  }, []);
 
-  const refreshProfiles = async () => {
+  const refreshProfiles = useCallback(async () => {
     if (user?.id) {
       await fetchProfiles();
     }
-  };
+  }, [user?.id, fetchProfiles]);
 
-  const refreshSession = async () => {
+  const refreshSession = useCallback(async () => {
     const token = getToken();
     if (!token) {
+      setUser(null);
+      setProfile(null);
+      setInfluencerProfile(null);
+      setBrandProfile(null);
+      setIsAuthenticated(false);
       setIsLoading(false);
       return;
     }
@@ -78,27 +86,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             user_type: session.user.profile.userType,
           } : undefined,
         });
+        setIsAuthenticated(true);
         await fetchProfiles();
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (error) {
       console.error("Session check failed:", error);
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchProfiles]);
+
+  // Set user directly after login (to avoid race condition with navigation)
+  const setUserFromLogin = useCallback(async (sessionUser: any) => {
+    if (sessionUser) {
+      setUser({
+        id: sessionUser.id,
+        email: sessionUser.email,
+        user_metadata: sessionUser.profile ? {
+          name: sessionUser.profile.fullName,
+          user_type: sessionUser.profile.userType,
+        } : undefined,
+      });
+      setIsAuthenticated(true);
+      setIsLoading(false);
+      // Fetch profiles in background
+      fetchProfiles();
+    }
+  }, [fetchProfiles]);
 
   useEffect(() => {
     // Check for existing session on mount
     refreshSession();
-  }, []);
+  }, [refreshSession]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await authApi.signOut();
     setUser(null);
     setProfile(null);
     setInfluencerProfile(null);
     setBrandProfile(null);
-  };
+    setIsAuthenticated(false);
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -108,9 +141,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         influencerProfile,
         brandProfile,
         isLoading,
+        isAuthenticated,
         signOut,
         refreshProfiles,
         refreshSession,
+        setUserFromLogin,
       }}
     >
       {children}
@@ -124,15 +159,5 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
-
-// Helper hook to set user after sign in/up (called from Auth.tsx)
-export function useSetAuthUser() {
-  const context = useContext(AuthContext);
-  return (user: User | null, profile?: Profile | null) => {
-    // This is a workaround - in production you'd want a proper state update mechanism
-    // For now, we'll refresh the page which will trigger the useEffect
-    window.location.reload();
-  };
 }
 

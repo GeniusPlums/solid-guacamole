@@ -17,9 +17,10 @@ const niches = [
 
 export default function InfluencerOnboarding() {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, refreshProfiles, refreshSession } = useAuth();
+  const { user, isLoading: authLoading, isAuthenticated, refreshProfiles, influencerProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     bio: "",
@@ -30,12 +31,29 @@ export default function InfluencerOnboarding() {
     location: "",
   });
 
-  // Refresh session on mount to ensure user is loaded after signup redirect
+  // Redirect logic - must wait for auth loading to complete
   useEffect(() => {
-    if (!user && !authLoading) {
-      refreshSession();
+    if (authLoading) {
+      return;
     }
-  }, [user, authLoading, refreshSession]);
+
+    if (hasRedirected) {
+      return;
+    }
+
+    // Not authenticated - redirect to auth
+    if (!isAuthenticated || !user) {
+      setHasRedirected(true);
+      navigate("/auth?type=influencer", { replace: true });
+      return;
+    }
+
+    // Already has influencer profile - redirect to dashboard
+    if (influencerProfile) {
+      setHasRedirected(true);
+      navigate("/influencer/dashboard", { replace: true });
+    }
+  }, [authLoading, isAuthenticated, user, influencerProfile, navigate, hasRedirected]);
 
   const toggleNiche = (niche: string) => {
     setSelectedNiches((prev) =>
@@ -84,7 +102,7 @@ export default function InfluencerOnboarding() {
         description: "Your influencer profile has been created successfully.",
       });
 
-      navigate("/influencer/dashboard");
+      navigate("/influencer/dashboard", { replace: true });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -95,6 +113,30 @@ export default function InfluencerOnboarding() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading if not authenticated (will redirect)
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">

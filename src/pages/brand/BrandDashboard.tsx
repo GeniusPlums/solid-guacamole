@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,26 +11,54 @@ import { Search, TrendingUp, Users, Target, MessageSquare, Zap, ArrowRight } fro
 
 export default function BrandDashboard() {
   const navigate = useNavigate();
-  const { user, profile, brandProfile, isLoading } = useAuth();
+  const { user, profile, brandProfile, isLoading, isAuthenticated } = useAuth();
   const { data: campaigns } = useCampaigns();
   const { data: collaborations } = useCollaborations();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      navigate("/auth?type=brand");
+    // Wait for auth loading to complete before making any redirect decisions
+    if (isLoading) {
       return;
     }
-    if (!isLoading && profile?.userType !== "brand") {
-      navigate("/influencer/dashboard");
-      return;
-    }
-    // Redirect to onboarding if brand profile not complete
-    if (!isLoading && user && profile && !brandProfile) {
-      navigate("/brand/onboarding");
-    }
-  }, [isLoading, user, profile, brandProfile, navigate]);
 
+    // Prevent multiple redirects
+    if (hasRedirected) {
+      return;
+    }
+
+    // Not authenticated - redirect to auth
+    if (!isAuthenticated || !user) {
+      setHasRedirected(true);
+      navigate("/auth?type=brand", { replace: true });
+      return;
+    }
+
+    // Wrong user type - redirect to influencer dashboard
+    if (profile && profile.userType !== "brand") {
+      setHasRedirected(true);
+      navigate("/influencer/dashboard", { replace: true });
+      return;
+    }
+
+    // Redirect to onboarding if brand profile not complete
+    if (user && profile && !brandProfile) {
+      setHasRedirected(true);
+      navigate("/brand/onboarding", { replace: true });
+    }
+  }, [isLoading, isAuthenticated, user, profile, brandProfile, navigate, hasRedirected]);
+
+  // Show loading while auth state is being determined
   if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show loading if not authenticated (will redirect)
+  if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

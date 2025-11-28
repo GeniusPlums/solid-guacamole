@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,24 +11,53 @@ import { Star, Briefcase, DollarSign, BarChart3, ArrowRight, User, MessageSquare
 
 export default function InfluencerDashboard() {
   const navigate = useNavigate();
-  const { user, profile, influencerProfile, isLoading } = useAuth();
+  const { user, profile, influencerProfile, isLoading, isAuthenticated } = useAuth();
   const { data: collaborations } = useCollaborations();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      navigate("/auth?type=influencer");
+    // Wait for auth loading to complete before making any redirect decisions
+    if (isLoading) {
       return;
     }
-    if (!isLoading && profile?.userType !== "influencer") {
-      navigate("/brand/dashboard");
-      return;
-    }
-    if (!isLoading && user && profile && !influencerProfile) {
-      navigate("/influencer/onboarding");
-    }
-  }, [isLoading, user, profile, influencerProfile, navigate]);
 
+    // Prevent multiple redirects
+    if (hasRedirected) {
+      return;
+    }
+
+    // Not authenticated - redirect to auth
+    if (!isAuthenticated || !user) {
+      setHasRedirected(true);
+      navigate("/auth?type=influencer", { replace: true });
+      return;
+    }
+
+    // Wrong user type - redirect to brand dashboard
+    if (profile && profile.userType !== "influencer") {
+      setHasRedirected(true);
+      navigate("/brand/dashboard", { replace: true });
+      return;
+    }
+
+    // Redirect to onboarding if influencer profile not complete
+    if (user && profile && !influencerProfile) {
+      setHasRedirected(true);
+      navigate("/influencer/onboarding", { replace: true });
+    }
+  }, [isLoading, isAuthenticated, user, profile, influencerProfile, navigate, hasRedirected]);
+
+  // Show loading while auth state is being determined
   if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show loading if not authenticated (will redirect)
+  if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { authApi, getToken } from "@/lib/api";
+import { authApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 const Auth = () => {
@@ -14,35 +15,33 @@ const Auth = () => {
   const userType = searchParams.get("type") || "brand";
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, isLoading: authLoading, isAuthenticated, profile, setUserFromLogin } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
+  // Redirect authenticated users away from auth page
   useEffect(() => {
-    // Check if user is already logged in
-    const checkAuth = async () => {
-      const token = getToken();
-      if (!token) return;
+    // Wait for auth loading to complete before checking
+    if (authLoading) {
+      return;
+    }
 
-      try {
-        const session = await authApi.getSession();
-        if (session?.user) {
-          const userType = session.user.profile?.userType;
-          if (userType === "brand") {
-            navigate("/brand/dashboard");
-          } else if (userType === "influencer") {
-            navigate("/influencer/dashboard");
-          }
-        }
-      } catch (error) {
-        // Token invalid, user not logged in
+    setIsCheckingAuth(false);
+
+    // If user is authenticated, redirect to appropriate dashboard
+    if (isAuthenticated && user) {
+      const userProfileType = profile?.userType;
+      if (userProfileType === "brand") {
+        navigate("/brand/dashboard", { replace: true });
+      } else if (userProfileType === "influencer") {
+        navigate("/influencer/dashboard", { replace: true });
       }
-    };
-
-    checkAuth();
-  }, [navigate]);
+    }
+  }, [authLoading, isAuthenticated, user, profile, navigate]);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>, type: string) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
@@ -61,6 +60,9 @@ const Auth = () => {
         throw new Error('Failed to create account');
       }
 
+      // Update auth context with the new user before navigation
+      await setUserFromLogin(result.session?.user);
+
       toast({
         title: "Success!",
         description: "Account created successfully.",
@@ -68,9 +70,9 @@ const Auth = () => {
 
       // Navigate to onboarding
       if (type === "brand") {
-        navigate("/brand/onboarding");
+        navigate("/brand/onboarding", { replace: true });
       } else {
-        navigate("/influencer/onboarding");
+        navigate("/influencer/onboarding", { replace: true });
       }
     } catch (error: any) {
       toast({
@@ -79,13 +81,13 @@ const Auth = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
@@ -98,20 +100,23 @@ const Auth = () => {
         throw new Error('Invalid credentials');
       }
 
+      // Update auth context with the new user before navigation
+      await setUserFromLogin(result.session?.user);
+
       toast({
         title: "Welcome back!",
         description: "Successfully signed in.",
       });
 
       // Navigate based on user type
-      const userType = result.session?.user?.profile?.userType;
-      if (userType === "brand") {
-        navigate("/brand/dashboard");
-      } else if (userType === "influencer") {
-        navigate("/influencer/dashboard");
+      const loginUserType = result.session?.user?.profile?.userType;
+      if (loginUserType === "brand") {
+        navigate("/brand/dashboard", { replace: true });
+      } else if (loginUserType === "influencer") {
+        navigate("/influencer/dashboard", { replace: true });
       } else {
         // Default to brand dashboard if type unknown
-        navigate("/brand/dashboard");
+        navigate("/brand/dashboard", { replace: true });
       }
     } catch (error: any) {
       toast({
@@ -120,9 +125,33 @@ const Auth = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  // Show loading spinner while checking authentication status
+  if (authLoading || isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If already authenticated, show redirecting message (this should be brief)
+  if (isAuthenticated && user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
@@ -142,7 +171,7 @@ const Auth = () => {
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="signin" className="space-y-4">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
@@ -153,7 +182,7 @@ const Auth = () => {
                     type="email"
                     placeholder="you@example.com"
                     required
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div className="space-y-2">
@@ -164,11 +193,11 @@ const Auth = () => {
                     type="password"
                     placeholder="••••••••"
                     required
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   />
                 </div>
-                <Button type="submit" className="w-full bg-gradient-primary" disabled={isLoading}>
-                  {isLoading ? (
+                <Button type="submit" className="w-full bg-gradient-primary" disabled={isSubmitting}>
+                  {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Signing in...
@@ -179,7 +208,7 @@ const Auth = () => {
                 </Button>
               </form>
             </TabsContent>
-            
+
             <TabsContent value="signup" className="space-y-4">
               <form onSubmit={(e) => handleSignUp(e, userType)} className="space-y-4">
                 <div className="space-y-2">
@@ -190,7 +219,7 @@ const Auth = () => {
                     type="text"
                     placeholder="John Doe"
                     required
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div className="space-y-2">
@@ -201,7 +230,7 @@ const Auth = () => {
                     type="email"
                     placeholder="you@example.com"
                     required
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div className="space-y-2">
@@ -213,11 +242,11 @@ const Auth = () => {
                     placeholder="••••••••"
                     required
                     minLength={6}
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   />
                 </div>
-                <Button type="submit" className="w-full bg-gradient-primary" disabled={isLoading}>
-                  {isLoading ? (
+                <Button type="submit" className="w-full bg-gradient-primary" disabled={isSubmitting}>
+                  {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating account...
