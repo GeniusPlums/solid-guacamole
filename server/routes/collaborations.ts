@@ -71,6 +71,14 @@ collaborationsRouter.post('/', authMiddleware, async (req: AuthRequest, res) => 
   try {
     const { campaignId, influencerId, offeredAmount, deliverables, deadline, notes } = req.body;
 
+    // Validate required fields
+    if (!campaignId) {
+      return res.status(400).json({ error: 'Campaign ID is required' });
+    }
+    if (!influencerId) {
+      return res.status(400).json({ error: 'Influencer ID is required' });
+    }
+
     const brandProfile = await db.query.brandProfiles.findFirst({
       where: eq(schema.brandProfiles.userId, req.user!.id),
     });
@@ -79,23 +87,24 @@ collaborationsRouter.post('/', authMiddleware, async (req: AuthRequest, res) => 
       return res.status(400).json({ error: 'Brand profile required' });
     }
 
+    // Properly handle the deadline date conversion
     const [collaboration] = await db.insert(schema.collaborations)
       .values({
         campaignId,
         influencerId,
         brandId: brandProfile.id,
-        offeredAmount,
-        deliverables,
-        deadline,
-        notes,
+        offeredAmount: offeredAmount || null,
+        deliverables: deliverables || null,
+        deadline: deadline ? new Date(deadline) : null,
+        notes: notes || null,
         status: 'pending',
       })
       .returning();
 
     res.status(201).json(collaboration);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create collaboration error:', error);
-    res.status(500).json({ error: 'Failed to create collaboration' });
+    res.status(500).json({ error: error.message || 'Failed to create collaboration' });
   }
 });
 
