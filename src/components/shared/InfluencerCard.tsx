@@ -1,11 +1,21 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, Instagram, Youtube, Twitter, Heart, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Star, Instagram, Youtube, Twitter, Heart, Loader2, Send } from "lucide-react";
 import { InfluencerWithProfile } from "@/hooks/useInfluencers";
 import { useIsShortlisted, useAddToShortlist, useRemoveFromShortlist } from "@/hooks/useShortlists";
+import { useCampaigns } from "@/hooks/useCampaigns";
+import { useCreateCollaboration } from "@/hooks/useCollaborations";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface InfluencerCardProps {
@@ -33,13 +43,28 @@ export function InfluencerCard({
   matchReasons,
   showShortlistButton = true,
 }: InfluencerCardProps) {
-  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { profile, brandProfile } = useAuth();
   const isBrand = profile?.userType === "brand";
   const { data: shortlistData } = useIsShortlisted(isBrand ? influencer.id : undefined);
   const addToShortlist = useAddToShortlist();
   const removeFromShortlist = useRemoveFromShortlist();
   const isShortlisted = shortlistData?.isShortlisted || false;
   const isShortlistLoading = addToShortlist.isPending || removeFromShortlist.isPending;
+
+  // Collaboration dialog state
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [collabForm, setCollabForm] = useState({
+    campaignId: "",
+    offeredAmount: "",
+    deliverables: "",
+    deadline: "",
+    notes: "",
+  });
+  const { data: campaigns } = useCampaigns();
+  const createCollaboration = useCreateCollaboration();
+  const hasCampaigns = campaigns && campaigns.length > 0;
 
   // Support both camelCase (from API) and snake_case (legacy) field names
   const totalFollowers =
@@ -58,6 +83,30 @@ export function InfluencerCard({
       removeFromShortlist.mutate(influencer.id);
     } else {
       addToShortlist.mutate({ influencerId: influencer.id });
+    }
+  };
+
+  const handleSendRequest = async () => {
+    if (!collabForm.campaignId) {
+      toast({ title: "Error", description: "Please select a campaign", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await createCollaboration.mutateAsync({
+        campaignId: collabForm.campaignId,
+        influencerId: influencer.id,
+        offeredAmount: collabForm.offeredAmount ? parseFloat(collabForm.offeredAmount) : undefined,
+        deliverables: collabForm.deliverables || undefined,
+        deadline: collabForm.deadline || undefined,
+        notes: collabForm.notes || undefined,
+      });
+
+      toast({ title: "Request sent!", description: `Collaboration request sent to ${displayName}` });
+      setIsDialogOpen(false);
+      setCollabForm({ campaignId: "", offeredAmount: "", deliverables: "", deadline: "", notes: "" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   };
 
@@ -167,10 +216,97 @@ export function InfluencerCard({
           <Button className="flex-1 bg-gradient-primary" onClick={onViewProfile}>
             View Profile
           </Button>
-          {onContact && (
-            <Button variant="outline" onClick={onContact}>
-              Contact
-            </Button>
+          {isBrand && brandProfile && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Send className="w-4 h-4 mr-1" />
+                  Reach Out
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Send Collaboration Request</DialogTitle>
+                  <DialogDescription>Invite {displayName} to collaborate on a campaign</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label>Select Campaign *</Label>
+                    <Select
+                      value={collabForm.campaignId}
+                      onValueChange={(v) => setCollabForm({ ...collabForm, campaignId: v })}
+                      disabled={!hasCampaigns}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={hasCampaigns ? "Choose a campaign" : "No campaigns available"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hasCampaigns ? (
+                          campaigns.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                            <p>No campaigns yet.</p>
+                            <Button
+                              variant="link"
+                              className="p-0 h-auto"
+                              onClick={() => {
+                                setIsDialogOpen(false);
+                                navigate("/brand/campaigns/new");
+                              }}
+                            >
+                              Create your first campaign
+                            </Button>
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Offered Amount ($)</Label>
+                    <Input
+                      type="number"
+                      value={collabForm.offeredAmount}
+                      onChange={(e) => setCollabForm({ ...collabForm, offeredAmount: e.target.value })}
+                      placeholder="e.g., 500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Deliverables</Label>
+                    <Input
+                      value={collabForm.deliverables}
+                      onChange={(e) => setCollabForm({ ...collabForm, deliverables: e.target.value })}
+                      placeholder="e.g., 2 Instagram posts, 1 story"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Deadline</Label>
+                    <Input
+                      type="date"
+                      value={collabForm.deadline}
+                      onChange={(e) => setCollabForm({ ...collabForm, deadline: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Message to Influencer</Label>
+                    <Textarea
+                      value={collabForm.notes}
+                      onChange={(e) => setCollabForm({ ...collabForm, notes: e.target.value })}
+                      placeholder="Tell them about your campaign..."
+                    />
+                  </div>
+                  <Button
+                    className="w-full bg-gradient-primary"
+                    onClick={handleSendRequest}
+                    disabled={!collabForm.campaignId || createCollaboration.isPending}
+                  >
+                    {createCollaboration.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Send Request
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </CardContent>

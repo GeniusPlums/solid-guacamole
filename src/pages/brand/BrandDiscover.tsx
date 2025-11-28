@@ -286,7 +286,7 @@ export default function BrandDiscover() {
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {aiResults.slice(0, 9).map((scored) => (
-                <Card key={scored.influencer.id} className="hover:shadow-lg transition-all overflow-hidden">
+                <div key={scored.influencer.id} className="relative">
                   <InfluencerCard
                     influencer={scored.influencer}
                     showScore
@@ -295,14 +295,14 @@ export default function BrandDiscover() {
                     onViewProfile={() => navigate(`/influencer/${scored.influencer.id}`)}
                   />
                   {scored.isLoadingExplanation && (
-                    <div className="px-4 pb-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background/80 backdrop-blur-sm rounded px-2 py-1">
                         <Loader2 className="w-3 h-3 animate-spin" />
                         <span>Generating AI insight...</span>
                       </div>
                     </div>
                   )}
-                </Card>
+                </div>
               ))}
             </div>
           </div>
