@@ -50,25 +50,29 @@ export default function BrandDiscover() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [followerRange, setFollowerRange] = useState([10000, 1000000]);
   const [minEngagement, setMinEngagement] = useState(2);
-  const [hasAutoMatchedNiches, setHasAutoMatchedNiches] = useState(false);
+  // Track niches suggested based on brand's industry (for AI matching)
+  const [suggestedNiches, setSuggestedNiches] = useState<string[]>([]);
+  // Track if user has explicitly interacted with filters
+  const [userHasFilteredManually, setUserHasFilteredManually] = useState(false);
 
-  // Auto-select niches based on brand's industry when component mounts
+  // Auto-suggest niches based on brand's industry (but don't auto-filter the results)
   useEffect(() => {
-    if (brandProfile?.industry && !hasAutoMatchedNiches) {
-      const suggestedNiches = industryToNichesMap[brandProfile.industry] || [];
-      if (suggestedNiches.length > 0) {
-        setSelectedNiches(suggestedNiches);
-        setHasAutoMatchedNiches(true);
+    if (brandProfile?.industry && suggestedNiches.length === 0) {
+      const industryNiches = industryToNichesMap[brandProfile.industry] || [];
+      if (industryNiches.length > 0) {
+        setSuggestedNiches(industryNiches);
       }
     }
-  }, [brandProfile?.industry, hasAutoMatchedNiches]);
+  }, [brandProfile?.industry, suggestedNiches.length]);
 
+  // Only apply niche/platform filters if user has explicitly selected them
+  // This prevents the "flash and disappear" issue caused by auto-filtering
   const { data: influencers, isLoading } = useInfluencers({
     search: searchQuery,
-    niche: selectedNiches[0] || undefined,
-    platform: selectedPlatforms[0] || undefined,
-    minFollowers: followerRange[0],
-    minEngagement,
+    niche: userHasFilteredManually && selectedNiches.length > 0 ? selectedNiches[0] : undefined,
+    platform: userHasFilteredManually && selectedPlatforms.length > 0 ? selectedPlatforms[0] : undefined,
+    minFollowers: userHasFilteredManually ? followerRange[0] : undefined,
+    minEngagement: userHasFilteredManually ? minEngagement : undefined,
   });
 
   const { results: aiResults, isAnalyzing, analyzeAndMatch, isAIEnabled } = useAIMatching();
@@ -77,13 +81,13 @@ export default function BrandDiscover() {
   const handleAISearch = async () => {
     if (!influencers) return;
 
-    // Use brand's industry to suggest niches if none selected
-    const industryNiches = brandProfile?.industry
-      ? industryToNichesMap[brandProfile.industry] || ["Lifestyle"]
-      : ["Lifestyle"];
+    // Use suggested niches (based on brand's industry) for AI matching if no niches explicitly selected
+    const nichesToUse = selectedNiches.length > 0
+      ? selectedNiches
+      : (suggestedNiches.length > 0 ? suggestedNiches : ["Lifestyle"]);
 
     const requirements: CampaignRequirements = {
-      niche: selectedNiches.length > 0 ? selectedNiches : industryNiches,
+      niche: nichesToUse,
       platforms: selectedPlatforms.length > 0 ? selectedPlatforms : ["instagram"],
       minFollowers: followerRange[0],
       maxFollowers: followerRange[1],
@@ -129,12 +133,14 @@ export default function BrandDiscover() {
   };
 
   const toggleNiche = (niche: string) => {
+    setUserHasFilteredManually(true);
     setSelectedNiches((prev) =>
       prev.includes(niche) ? prev.filter((n) => n !== niche) : [...prev, niche]
     );
   };
 
   const togglePlatform = (platform: string) => {
+    setUserHasFilteredManually(true);
     setSelectedPlatforms((prev) =>
       prev.includes(platform) ? prev.filter((p) => p !== platform) : [...prev, platform]
     );
@@ -214,6 +220,20 @@ export default function BrandDiscover() {
 
             {showFilters && (
               <div className="mt-6 pt-6 border-t space-y-6">
+                {/* Show suggested niches based on brand's industry */}
+                {suggestedNiches.length > 0 && !userHasFilteredManually && (
+                  <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <Sparkles className="w-5 h-5 text-primary flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">
+                        Suggested for {brandProfile?.industry}: {suggestedNiches.join(", ")}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Click niches below to filter, or use AI Match to find best influencers
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <Label className="mb-3 block">Niches</Label>
                   <div className="flex flex-wrap gap-2">
@@ -223,6 +243,7 @@ export default function BrandDiscover() {
                         variant={selectedNiches.includes(niche) ? "default" : "outline"}
                         size="sm"
                         onClick={() => toggleNiche(niche)}
+                        className={suggestedNiches.includes(niche) && !userHasFilteredManually ? "ring-1 ring-primary/50" : ""}
                       >
                         {niche}
                       </Button>
@@ -253,7 +274,10 @@ export default function BrandDiscover() {
                     </Label>
                     <Slider
                       value={followerRange}
-                      onValueChange={setFollowerRange}
+                      onValueChange={(v) => {
+                        setUserHasFilteredManually(true);
+                        setFollowerRange(v);
+                      }}
                       min={1000}
                       max={10000000}
                       step={10000}
@@ -263,13 +287,35 @@ export default function BrandDiscover() {
                     <Label className="mb-3 block">Min Engagement Rate: {minEngagement}%</Label>
                     <Slider
                       value={[minEngagement]}
-                      onValueChange={(v) => setMinEngagement(v[0])}
+                      onValueChange={(v) => {
+                        setUserHasFilteredManually(true);
+                        setMinEngagement(v[0]);
+                      }}
                       min={0}
                       max={15}
                       step={0.5}
                     />
                   </div>
                 </div>
+
+                {/* Clear filters button */}
+                {userHasFilteredManually && (
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setUserHasFilteredManually(false);
+                        setSelectedNiches([]);
+                        setSelectedPlatforms([]);
+                        setFollowerRange([10000, 1000000]);
+                        setMinEngagement(2);
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
