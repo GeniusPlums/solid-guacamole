@@ -1,0 +1,54 @@
+# Dependencies
+node_modules
+
+# Build output (will be created in container)
+dist
+server/dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment files (secrets should be passed via Cloud Run env vars)
+.env
+.env.local
+.env.*.local
+
+# Test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+src/__tests__
+coverage
+
+# Documentation
+README.md
+*.md
+!package.json
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# Vercel (not needed for Cloud Run)
+vercel.json
+.vercel
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+
+# Lock files (keep package-lock.json)
+bun.lockb
+yarn.lock
+pnpm-lock.yaml
+
