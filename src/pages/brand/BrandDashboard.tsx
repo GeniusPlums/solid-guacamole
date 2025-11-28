@@ -20,7 +20,7 @@ export default function BrandDashboard() {
       navigate("/auth?type=brand");
       return;
     }
-    if (!isLoading && profile?.user_type !== "brand") {
+    if (!isLoading && profile?.userType !== "brand") {
       navigate("/influencer/dashboard");
       return;
     }

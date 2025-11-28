@@ -155,7 +155,7 @@ export default function InfluencerProfileView() {
                     <p className="text-xs text-muted-foreground">Collaborations</p>
                   </div>
                 </div>
-                {profile?.user_type === "brand" && brandProfile && (
+                {profile?.userType === "brand" && brandProfile && (
                   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button className="w-full md:w-auto bg-gradient-primary"><Send className="w-4 h-4 mr-2" />Send Collaboration Request</Button>
