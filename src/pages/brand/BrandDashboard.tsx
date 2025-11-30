@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/shared/StatCard";
@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCampaigns } from "@/hooks/useCampaigns";
 import { useCollaborations } from "@/hooks/useCollaborations";
 import { useInfluencers } from "@/hooks/useInfluencers";
-import { Search, TrendingUp, Users, Target, MessageSquare, Zap, ArrowRight } from "lucide-react";
+import { Search, TrendingUp, Users, Target, MessageSquare, Sparkles, ArrowRight } from "lucide-react";
 import type { InfluencerData } from "@/lib/gemini";
 
 export default function BrandDashboard() {
@@ -37,51 +37,31 @@ export default function BrandDashboard() {
   }));
 
   useEffect(() => {
-    // Wait for auth loading to complete before making any redirect decisions
-    if (isLoading) {
-      return;
-    }
+    if (isLoading) return;
+    if (hasRedirected) return;
 
-    // Prevent multiple redirects
-    if (hasRedirected) {
-      return;
-    }
-
-    // Not authenticated - redirect to auth
     if (!isAuthenticated || !user) {
       setHasRedirected(true);
       navigate("/auth?type=brand", { replace: true });
       return;
     }
 
-    // Wrong user type - redirect to influencer dashboard
     if (profile && profile.userType !== "brand") {
       setHasRedirected(true);
       navigate("/influencer/dashboard", { replace: true });
       return;
     }
 
-    // Redirect to onboarding if brand profile not complete
     if (user && profile && !brandProfile) {
       setHasRedirected(true);
       navigate("/brand/onboarding", { replace: true });
     }
   }, [isLoading, isAuthenticated, user, profile, brandProfile, navigate, hasRedirected]);
 
-  // Show loading while auth state is being determined
-  if (isLoading) {
+  if (isLoading || !isAuthenticated || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Show loading if not authenticated (will redirect)
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
       </div>
     );
   }
@@ -90,7 +70,6 @@ export default function BrandDashboard() {
   const pendingCollabs = collaborations?.filter((c) => c.status === "pending").length || 0;
   const activeCollabs = collaborations?.filter((c) => c.status === "accepted").length || 0;
 
-  // Calculate total reach from active/accepted collaborations
   const totalReach = collaborations
     ?.filter((c) => c.status === "accepted" || c.status === "completed")
     .reduce((sum, collab) => {
@@ -113,100 +92,97 @@ export default function BrandDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        {/* Welcome Section */}
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Welcome back, {brandProfile?.company_name || profile?.full_name}!
+      <div className="space-y-10 animate-fade-in">
+        {/* Welcome Section - Apple style */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+              Welcome back, {brandProfile?.company_name || profile?.full_name}
             </h1>
-            <p className="text-muted-foreground">
-              Manage your influencer campaigns and discover new collaboration opportunities.
+            <p className="text-muted-foreground text-lg">
+              Manage campaigns and discover new collaboration opportunities.
             </p>
           </div>
-          <Button className="bg-gradient-primary" onClick={() => navigate("/brand/discover")}>
+          <Button variant="apple" onClick={() => navigate("/brand/discover")}>
             <Search className="w-4 h-4 mr-2" />
-            Find Influencers
+            Find Creators
           </Button>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid md:grid-cols-4 gap-6">
+        {/* Stats Grid - Apple minimal style */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Active Campaigns"
             value={activeCampaigns}
-            description="Currently running campaigns"
             icon={Target}
             onClick={() => navigate("/brand/campaigns")}
           />
           <StatCard
-            title="Active Collaborations"
+            title="Collaborations"
             value={activeCollabs}
-            description="Ongoing partnerships"
             icon={Users}
             onClick={() => navigate("/brand/collaborations")}
           />
           <StatCard
-            title="Pending Requests"
+            title="Pending"
             value={pendingCollabs}
-            description="Awaiting response"
             icon={MessageSquare}
             onClick={() => navigate("/brand/collaborations")}
           />
           <StatCard
             title="Total Reach"
             value={formatReach(totalReach)}
-            description="Combined influencer reach"
             icon={TrendingUp}
             onClick={() => navigate("/brand/collaborations")}
           />
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions - Apple card style */}
         <div className="grid lg:grid-cols-2 gap-6">
-          <Card className="border-primary/20">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
+          <Card className="border-0 bg-foreground text-background overflow-hidden">
+            <CardContent className="p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-background/10 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
-                  <CardTitle>AI-Powered Discovery</CardTitle>
-                  <CardDescription>Let AI find your perfect influencer match</CardDescription>
+                  <h3 className="text-xl font-semibold mb-1">AI-Powered Discovery</h3>
+                  <p className="text-background/70">Find your perfect creator match</p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Answer a few questions about your campaign goals, target audience, and budget.
-                Our AI will analyze thousands of influencers to find the perfect match.
+              <p className="text-background/80 mb-6 leading-relaxed">
+                Our AI analyzes thousands of creators to find the perfect match for your campaign goals, target audience, and budget.
               </p>
-              <Button className="w-full bg-gradient-primary" onClick={() => navigate("/brand/discover")}>
+              <Button
+                className="w-full bg-background text-foreground hover:bg-background/90"
+                onClick={() => navigate("/brand/discover")}
+              >
                 Start AI Discovery
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-secondary" />
+          <Card className="border-0 bg-secondary/30">
+            <CardContent className="p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-foreground/5 flex items-center justify-center">
+                  <Target className="w-6 h-6 text-foreground" />
                 </div>
                 <div>
-                  <CardTitle>Create Campaign</CardTitle>
-                  <CardDescription>Launch a new influencer marketing campaign</CardDescription>
+                  <h3 className="text-xl font-semibold mb-1">Create Campaign</h3>
+                  <p className="text-muted-foreground">Launch a new marketing campaign</p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Set up a new campaign with specific goals, budget, and requirements.
-                Track performance and manage multiple influencer partnerships.
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                Set up a campaign with specific goals, budget, and requirements. Track performance and manage multiple partnerships.
               </p>
-              <Button variant="outline" className="w-full" onClick={() => navigate("/brand/campaigns")}>
-                Create New Campaign
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate("/brand/campaigns")}
+              >
+                Create Campaign
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
@@ -214,7 +190,6 @@ export default function BrandDashboard() {
         </div>
       </div>
 
-      {/* AI Chatbot */}
       <AIChatbot
         userType="brand"
         userName={brandProfile?.company_name || profile?.full_name}

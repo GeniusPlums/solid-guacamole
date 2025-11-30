@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -17,60 +17,38 @@ export default function InfluencerDashboard() {
   const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
-    // Wait for auth loading to complete before making any redirect decisions
-    if (isLoading) {
-      return;
-    }
+    if (isLoading) return;
+    if (hasRedirected) return;
 
-    // Prevent multiple redirects
-    if (hasRedirected) {
-      return;
-    }
-
-    // Not authenticated - redirect to auth
     if (!isAuthenticated || !user) {
       setHasRedirected(true);
       navigate("/auth?type=influencer", { replace: true });
       return;
     }
 
-    // Wrong user type - redirect to brand dashboard
     if (profile && profile.userType !== "influencer") {
       setHasRedirected(true);
       navigate("/brand/dashboard", { replace: true });
       return;
     }
 
-    // Redirect to onboarding if influencer profile not complete
     if (user && profile && !influencerProfile) {
       setHasRedirected(true);
       navigate("/influencer/onboarding", { replace: true });
     }
   }, [isLoading, isAuthenticated, user, profile, influencerProfile, navigate, hasRedirected]);
 
-  // Show loading while auth state is being determined
-  if (isLoading) {
+  if (isLoading || !isAuthenticated || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Show loading if not authenticated (will redirect)
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
       </div>
     );
   }
 
   const activeCollabs = collaborations?.filter((c) => c.status === "accepted").length || 0;
   const pendingCollabs = collaborations?.filter((c) => c.status === "pending").length || 0;
-  const completedCollabs = collaborations?.filter((c) => c.status === "completed").length || 0;
 
-  // Calculate profile completion percentage
   const calculateProfileCompletion = () => {
     if (!influencerProfile) return 0;
     let completed = 0;
@@ -93,82 +71,82 @@ export default function InfluencerDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        {/* Welcome Section */}
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Welcome back, {profile?.fullName}!
+      <div className="space-y-10 animate-fade-in">
+        {/* Welcome Section - Apple style */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+              Welcome back, {profile?.fullName}
             </h1>
-            <p className="text-muted-foreground">
-              Manage your collaborations and grow your influence.
+            <p className="text-muted-foreground text-lg">
+              Manage collaborations and grow your influence.
             </p>
           </div>
-          <Button className="bg-gradient-primary" onClick={() => navigate("/influencer/profile")}>
+          <Button variant="apple" onClick={() => navigate("/influencer/profile")}>
             <User className="w-4 h-4 mr-2" />
             Edit Profile
           </Button>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid md:grid-cols-4 gap-6">
+        {/* Stats Grid - Apple minimal style */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            title="Profile Rating"
+            title="Rating"
             value={influencerProfile?.rating?.toFixed(1) || "N/A"}
-            description="Based on brand reviews"
             icon={Star}
           />
           <StatCard
-            title="Active Collaborations"
+            title="Collaborations"
             value={activeCollabs}
-            description="Currently ongoing"
             icon={Briefcase}
             onClick={() => navigate("/influencer/collaborations")}
           />
           <StatCard
-            title="Total Earnings"
+            title="Earnings"
             value={`$${totalEarnings.toLocaleString()}`}
-            description="From completed projects"
             icon={DollarSign}
           />
           <StatCard
-            title="Engagement Rate"
+            title="Engagement"
             value={`${influencerProfile?.engagement_rate || 0}%`}
-            description="Across platforms"
             icon={BarChart3}
           />
         </div>
 
-        {/* Main Content */}
+        {/* Main Content - Apple card style */}
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Profile Completion Card */}
-          <Card className={profileCompletion < 100 ? "border-primary/20" : ""}>
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
+          <Card className={`border-0 ${profileCompletion < 100 ? 'bg-foreground text-background' : 'bg-secondary/30'}`}>
+            <CardContent className="p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${profileCompletion < 100 ? 'bg-background/10' : 'bg-foreground/5'}`}>
+                  <User className="w-6 h-6" />
                 </div>
                 <div>
-                  <CardTitle>Complete Your Profile</CardTitle>
-                  <CardDescription>Stand out to brands with a comprehensive profile</CardDescription>
+                  <h3 className="text-xl font-semibold mb-1">Complete Your Profile</h3>
+                  <p className={profileCompletion < 100 ? 'text-background/70' : 'text-muted-foreground'}>
+                    Stand out to brands
+                  </p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
+
+              <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Profile completion</span>
+                  <span className={profileCompletion < 100 ? 'text-background/80' : ''}>Profile completion</span>
                   <span className="font-medium">{profileCompletion}%</span>
                 </div>
-                <Progress value={profileCompletion} className="h-2" />
+                <Progress value={profileCompletion} className="h-1.5" />
               </div>
-              <p className="text-sm text-muted-foreground">
+
+              <p className={`text-sm mb-6 leading-relaxed ${profileCompletion < 100 ? 'text-background/80' : 'text-muted-foreground'}`}>
                 {profileCompletion < 100
-                  ? "Add your portfolio, social media handles, niche, and content samples to increase visibility."
+                  ? "Add your portfolio, social handles, and content samples to increase visibility."
                   : "Your profile is complete! Brands can now discover you easily."}
               </p>
+
               <Button
-                className="w-full bg-gradient-primary"
+                className={`w-full ${profileCompletion < 100 ? 'bg-background text-foreground hover:bg-background/90' : ''}`}
+                variant={profileCompletion < 100 ? 'default' : 'outline'}
                 onClick={() => navigate("/influencer/profile")}
               >
                 {profileCompletion < 100 ? "Complete Profile" : "View Profile"}
@@ -178,23 +156,22 @@ export default function InfluencerDashboard() {
           </Card>
 
           {/* Pending Requests */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-secondary" />
+          <Card className="border-0 bg-secondary/30">
+            <CardContent className="p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-foreground/5 flex items-center justify-center">
+                  <MessageSquare className="w-6 h-6 text-foreground" />
                 </div>
                 <div>
-                  <CardTitle>Brand Opportunities</CardTitle>
-                  <CardDescription>Pending collaboration requests</CardDescription>
+                  <h3 className="text-xl font-semibold mb-1">Brand Opportunities</h3>
+                  <p className="text-muted-foreground">Pending requests</p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
+
               {pendingCollabs > 0 ? (
                 <>
-                  <p className="text-sm text-muted-foreground">
-                    You have <span className="font-bold text-primary">{pendingCollabs}</span> pending
+                  <p className="text-muted-foreground mb-6 leading-relaxed">
+                    You have <span className="font-semibold text-foreground">{pendingCollabs}</span> pending
                     collaboration requests from brands.
                   </p>
                   <Button
@@ -207,7 +184,7 @@ export default function InfluencerDashboard() {
                   </Button>
                 </>
               ) : (
-                <div className="flex items-center justify-center h-24 border-2 border-dashed border-border rounded-lg">
+                <div className="flex items-center justify-center h-32 border border-dashed border-border/50 rounded-xl">
                   <p className="text-sm text-muted-foreground">No pending requests</p>
                 </div>
               )}
@@ -216,7 +193,6 @@ export default function InfluencerDashboard() {
         </div>
       </div>
 
-      {/* AI Chatbot */}
       <AIChatbot
         userType="influencer"
         userName={profile?.fullName}

@@ -2,103 +2,109 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Apple-Inspired Design System
+   Clean, minimal, premium aesthetic with SF Pro-like typography
+   All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Base colors */
+    /* Apple-style Base colors - Clean whites and deep blacks */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 0 0% 0%;
 
-    /* Card styling */
+    /* Card styling - Subtle off-white with refined borders */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 0%;
 
-    /* Popover */
+    /* Popover - Pure white with subtle shadow */
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 0%;
 
-    /* Primary - Vibrant Cyan for digital/social */
-    --primary: 188 95% 43%;
+    /* Primary - Apple Blue */
+    --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 188 85% 55%;
+    --primary-glow: 211 100% 60%;
 
-    /* Secondary - Coral for creativity */
-    --secondary: 24 95% 53%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary - Apple Gray */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
 
-    /* Muted tones */
-    --muted: 220 13% 95%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted tones - Soft grays */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Accent colors */
-    --accent: 24 95% 53%;
+    /* Accent - Apple Blue accent */
+    --accent: 211 100% 50%;
     --accent-foreground: 0 0% 100%;
 
-    /* Status colors */
-    --destructive: 0 84% 60%;
+    /* Status colors - Apple-style */
+    --destructive: 0 100% 50%;
     --destructive-foreground: 0 0% 100%;
-    --success: 142 76% 36%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    /* Borders and inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 188 95% 43%;
+    /* Borders and inputs - Ultra subtle */
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 211 100% 50%;
 
-    /* Radius */
-    --radius: 0.75rem;
+    /* Apple-style radius */
+    --radius: 0.875rem;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(188 95% 43%), hsl(188 85% 55%));
-    --gradient-secondary: linear-gradient(135deg, hsl(24 95% 53%), hsl(33 100% 53%));
-    --gradient-hero: linear-gradient(135deg, hsl(188 95% 43%) 0%, hsl(217 91% 60%) 100%);
+    /* Gradients - Apple-style subtle gradients */
+    --gradient-primary: linear-gradient(180deg, hsl(211 100% 50%), hsl(211 100% 45%));
+    --gradient-secondary: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1);
-    --shadow-glow: 0 0 40px hsl(188 95% 43% / 0.3);
+    /* Apple-style Shadows - Soft, diffused */
+    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.04), 0 1px 2px -1px hsl(0 0% 0% / 0.04);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.05), 0 2px 4px -2px hsl(0 0% 0% / 0.05);
+    --shadow-lg: 0 10px 25px -3px hsl(0 0% 0% / 0.08), 0 4px 6px -4px hsl(0 0% 0% / 0.05);
+    --shadow-xl: 0 20px 40px -8px hsl(0 0% 0% / 0.12), 0 8px 16px -4px hsl(0 0% 0% / 0.05);
+    --shadow-glow: 0 0 0 4px hsl(211 100% 50% / 0.15);
+    --shadow-apple: 0 4px 24px hsl(0 0% 0% / 0.08);
+    --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.04), 0 0 0 1px hsl(0 0% 0% / 0.03);
 
-    /* Animations */
-    --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Apple-style Animations - Smooth, refined */
+    --transition-base: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+    --transition-smooth: all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    --transition-spring: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .dark {
-    --background: 222 47% 11%;
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
 
-    --card: 217 33% 17%;
+    --card: 0 0% 9%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 217 33% 17%;
+    --popover: 0 0% 9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 188 95% 43%;
+    --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 188 85% 55%;
+    --primary-glow: 211 100% 60%;
 
-    --secondary: 24 95% 53%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 24 95% 53%;
+    --accent: 211 100% 50%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 188 95% 43%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 211 100% 50%;
 
-    --shadow-glow: 0 0 40px hsl(188 95% 43% / 0.4);
+    --shadow-glow: 0 0 0 4px hsl(211 100% 50% / 0.2);
+    --shadow-apple: 0 4px 24px hsl(0 0% 0% / 0.4);
+    --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.2), 0 0 0 1px hsl(0 0% 100% / 0.05);
   }
 }
 
@@ -107,7 +113,131 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+    font-feature-settings: 'ss01' on, 'ss02' on, 'cv01' on;
+    letter-spacing: -0.015em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+
+  h1 {
+    @apply text-5xl md:text-6xl font-semibold tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  p {
+    @apply leading-relaxed;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Apple-style utility classes */
+@layer utilities {
+  .apple-blur {
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+
+  .apple-nav-blur {
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    background-color: hsl(0 0% 100% / 0.72);
+  }
+
+  .dark .apple-nav-blur {
+    background-color: hsl(0 0% 0% / 0.72);
+  }
+
+  .apple-shadow {
+    box-shadow: var(--shadow-apple);
+  }
+
+  .apple-card-shadow {
+    box-shadow: var(--shadow-card);
+  }
+
+  .apple-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(0 0% 30%) 100%);
+  }
+
+  .dark .text-gradient {
+    background-image: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 70%) 100%);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
   }
 }

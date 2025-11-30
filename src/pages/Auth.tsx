@@ -3,12 +3,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { authApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -19,16 +18,10 @@ const Auth = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Redirect authenticated users away from auth page
   useEffect(() => {
-    // Wait for auth loading to complete before checking
-    if (authLoading) {
-      return;
-    }
-
+    if (authLoading) return;
     setIsCheckingAuth(false);
 
-    // If user is authenticated, redirect to appropriate dashboard
     if (isAuthenticated && user) {
       const userProfileType = profile?.userType;
       if (userProfileType === "brand") {
@@ -56,30 +49,18 @@ const Auth = () => {
         userType: type as 'brand' | 'influencer',
       });
 
-      if (!result.success) {
-        throw new Error('Failed to create account');
-      }
-
-      // Update auth context with the new user before navigation
+      if (!result.success) throw new Error('Failed to create account');
       await setUserFromLogin(result.session?.user);
 
-      toast({
-        title: "Success!",
-        description: "Account created successfully.",
-      });
+      toast({ title: "Success!", description: "Account created successfully." });
 
-      // Navigate to onboarding
       if (type === "brand") {
         navigate("/brand/onboarding", { replace: true });
       } else {
         navigate("/influencer/onboarding", { replace: true });
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -95,88 +76,64 @@ const Auth = () => {
 
     try {
       const result = await authApi.signIn({ email, password });
+      if (!result.success) throw new Error('Invalid credentials');
 
-      if (!result.success) {
-        throw new Error('Invalid credentials');
-      }
-
-      // Update auth context with the new user and profiles before navigation
-      // This avoids an extra API call to fetch profiles
       await setUserFromLogin(result.session?.user, result.brandProfile, result.influencerProfile);
+      toast({ title: "Welcome back!", description: "Successfully signed in." });
 
-      toast({
-        title: "Welcome back!",
-        description: "Successfully signed in.",
-      });
-
-      // Navigate based on user type
       const loginUserType = result.session?.user?.profile?.userType;
       if (loginUserType === "brand") {
         navigate("/brand/dashboard", { replace: true });
       } else if (loginUserType === "influencer") {
         navigate("/influencer/dashboard", { replace: true });
       } else {
-        // Default to brand dashboard if type unknown
         navigate("/brand/dashboard", { replace: true });
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Show loading spinner while checking authentication status
-  if (authLoading || isCheckingAuth) {
+  if (authLoading || isCheckingAuth || (isAuthenticated && user)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If already authenticated, show redirecting message (this should be brief)
-  if (isAuthenticated && user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Redirecting to dashboard...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-primary rounded-xl" />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm animate-fade-up">
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <div className="w-14 h-14 bg-foreground rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <span className="text-background text-xl font-bold">ICY</span>
           </div>
-          <CardTitle className="text-2xl text-center">Welcome to ICY Platform</CardTitle>
-          <CardDescription className="text-center">
-            {userType === "brand" ? "Find the perfect influencers for your brand" : "Connect with brands and grow your influence"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          <h1 className="text-2xl font-semibold tracking-tight mb-2">
+            Welcome to ICY
+          </h1>
+          <p className="text-muted-foreground">
+            {userType === "brand"
+              ? "Find the perfect creators for your brand"
+              : "Connect with brands and grow your influence"}
+          </p>
+        </div>
+
+        {/* Auth Form */}
+        <div className="bg-secondary/30 rounded-2xl p-8">
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="signin" className="space-y-4">
-              <form onSubmit={handleSignIn} className="space-y-4">
+            <TabsContent value="signin" className="space-y-5 mt-0">
+              <form onSubmit={handleSignIn} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="signin-email" className="text-sm font-medium">Email</Label>
                   <Input
                     id="signin-email"
                     name="email"
@@ -187,7 +144,7 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <Label htmlFor="signin-password" className="text-sm font-medium">Password</Label>
                   <Input
                     id="signin-password"
                     name="password"
@@ -197,23 +154,21 @@ const Auth = () => {
                     disabled={isSubmitting}
                   />
                 </div>
-                <Button type="submit" className="w-full bg-gradient-primary" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    "Sign In"
-                  )}
+                <Button
+                  type="submit"
+                  variant="apple"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </TabsContent>
 
-            <TabsContent value="signup" className="space-y-4">
-              <form onSubmit={(e) => handleSignUp(e, userType)} className="space-y-4">
+            <TabsContent value="signup" className="space-y-5 mt-0">
+              <form onSubmit={(e) => handleSignUp(e, userType)} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Label htmlFor="signup-name" className="text-sm font-medium">Full Name</Label>
                   <Input
                     id="signup-name"
                     name="name"
@@ -224,7 +179,7 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
                   <Input
                     id="signup-email"
                     name="email"
@@ -235,7 +190,7 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password" className="text-sm font-medium">Password</Label>
                   <Input
                     id="signup-password"
                     name="password"
@@ -246,31 +201,32 @@ const Auth = () => {
                     disabled={isSubmitting}
                   />
                 </div>
-                <Button type="submit" className="w-full bg-gradient-primary" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    `Sign Up as ${userType === "brand" ? "Brand" : "Influencer"}`
-                  )}
+                <Button
+                  type="submit"
+                  variant="apple"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? "Creating account..."
+                    : `Sign Up as ${userType === "brand" ? "Brand" : "Creator"}`}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
+        </div>
 
-          <div className="mt-4 text-center">
-            <Button
-              variant="link"
-              onClick={() => navigate("/")}
-              className="text-sm text-muted-foreground"
-            >
-              Back to home
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Back link */}
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back to home
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
