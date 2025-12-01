@@ -17,8 +17,8 @@ export interface InfluencerData {
   youtubeSubscribers: number;
   twitterFollowers: number;
   tiktokFollowers: number;
-  engagementRate: number;
-  rating: number;
+  engagementRate: number | string | null;
+  rating: number | string | null;
   location: string;
   languages: string[];
 }
@@ -133,11 +133,11 @@ Current user: ${context.userName || 'User'} (${context.userType})`;
   if (context.userType === 'brand') {
     let influencerContext = '';
     if (context.influencers && context.influencers.length > 0) {
-      influencerContext = `\n\nAvailable influencers in the database:\n${context.influencers.map(inf => 
+      influencerContext = `\n\nAvailable influencers in the database:\n${context.influencers.map(inf =>
         `- ${inf.name}: ${inf.niche?.join(', ') || 'General'} niche, ` +
         `${formatFollowers(inf.instagramFollowers)} IG followers, ` +
-        `${inf.engagementRate?.toFixed(1) || 'N/A'}% engagement, ` +
-        `Rating: ${inf.rating?.toFixed(1) || 'N/A'}, ` +
+        `${inf.engagementRate ? Number(inf.engagementRate).toFixed(1) : 'N/A'}% engagement, ` +
+        `Rating: ${inf.rating ? Number(inf.rating).toFixed(1) : 'N/A'}, ` +
         `Location: ${inf.location || 'Not specified'}`
       ).join('\n')}`;
     }
