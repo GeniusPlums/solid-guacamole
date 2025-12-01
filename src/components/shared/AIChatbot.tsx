@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
-import { MessageSquare, X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { X, Send, Bot, User, Loader2, Sparkles, MessageCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sendMessageToGemini, ChatMessage, InfluencerData } from '@/lib/gemini';
 
@@ -14,9 +15,11 @@ interface AIChatbotProps {
   influencers?: InfluencerData[];
   brandInfo?: any;
   influencerInfo?: any;
+  /** If true, shows as a dashboard card instead of floating button */
+  variant?: 'floating' | 'card';
 }
 
-export function AIChatbot({ userType, userName, influencers, brandInfo, influencerInfo }: AIChatbotProps) {
+export function AIChatbot({ userType, userName, influencers, brandInfo, influencerInfo, variant = 'floating' }: AIChatbotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -118,169 +121,184 @@ export function AIChatbot({ userType, userName, influencers, brandInfo, influenc
         "What makes a good collaboration?"
       ];
 
-  return (
-    <>
-      {/* Floating Chat Button */}
-      <Button
-        onClick={() => setIsOpen(true)}
-        className={cn(
-          "fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50",
-          "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700",
-          "transition-all duration-300 hover:scale-110",
-          isOpen && "hidden"
-        )}
-        size="icon"
-      >
-        <Sparkles className="h-6 w-6 text-white" />
-      </Button>
+  // Chat content component (shared between card and dialog)
+  const ChatContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Messages Area */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full p-4">
+          <div className="space-y-4">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "flex gap-3",
+                  message.role === 'user' ? "flex-row-reverse" : "flex-row"
+                )}
+              >
+                <Avatar className={cn(
+                  "h-8 w-8 flex-shrink-0",
+                  message.role === 'user'
+                    ? "bg-primary"
+                    : "bg-gradient-to-r from-purple-600 to-blue-600"
+                )}>
+                  <div className="flex h-full w-full items-center justify-center">
+                    {message.role === 'user' ? (
+                      <User className="h-4 w-4 text-white" />
+                    ) : (
+                      <Bot className="h-4 w-4 text-white" />
+                    )}
+                  </div>
+                </Avatar>
+                <div
+                  className={cn(
+                    "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
+                    message.role === 'user'
+                      ? "bg-primary text-primary-foreground rounded-tr-sm"
+                      : "bg-muted rounded-tl-sm"
+                  )}
+                >
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                </div>
+              </div>
+            ))}
 
-      {/* Chat Panel */}
-      {isOpen && (
-        <Card className={cn(
-          "fixed bottom-6 right-6 w-[400px] h-[600px] z-50 shadow-2xl",
-          "flex flex-col overflow-hidden",
-          "animate-in slide-in-from-bottom-5 duration-300"
-        )}>
-          {/* Header */}
-          <CardHeader className="flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4">
-            <div className="flex items-center justify-between">
+            {/* Loading indicator */}
+            {isLoading && (
+              <div className="flex gap-3">
+                <Avatar className="h-8 w-8 bg-gradient-to-r from-purple-600 to-blue-600">
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Bot className="h-4 w-4 text-white" />
+                  </div>
+                </Avatar>
+                <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Suggested questions (only show when no messages yet) */}
+            {messages.length === 1 && !isLoading && (
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
+                <div className="flex flex-wrap gap-2">
+                  {suggestedQuestions.map((question, idx) => (
+                    <Button
+                      key={idx}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-auto py-1.5 px-3"
+                      onClick={() => {
+                        setInputValue(question);
+                        inputRef.current?.focus();
+                      }}
+                    >
+                      {question}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Input Area */}
+      <div className="flex-shrink-0 border-t p-4">
+        {error && (
+          <p className="text-xs text-destructive mb-2">{error}</p>
+        )}
+        <div className="flex gap-2">
+          <Input
+            ref={inputRef}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Ask me anything..."
+            disabled={isLoading}
+            className="flex-1"
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={!inputValue.trim() || isLoading}
+            size="icon"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Card variant - shows as a dashboard card
+  if (variant === 'card') {
+    return (
+      <>
+        <Card
+          className="border-0 bg-gradient-to-br from-purple-600 to-blue-600 text-white cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+          onClick={() => setIsOpen(true)}
+        >
+          <CardContent className="p-8">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
+                <MessageCircle className="w-7 h-7" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-2xl font-semibold mb-1">AI Assistant</h3>
+                <p className="text-white/80">Powered by Gemini</p>
+              </div>
+              <Sparkles className="w-6 h-6 text-white/60" />
+            </div>
+            <p className="text-white/90 mb-6 leading-relaxed text-base">
+              {userType === 'brand'
+                ? "Ask me to find the perfect influencers, explain recommendations, or answer any questions about influencer marketing."
+                : "Get tips on improving your profile, understanding brand opportunities, and growing your presence."
+              }
+            </p>
+            <Button
+              className="w-full bg-white text-purple-700 hover:bg-white/90 font-semibold"
+            >
+              Start Chatting
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Dialog for chat */}
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent className="max-w-2xl h-[80vh] p-0 gap-0 flex flex-col">
+            <DialogHeader className="flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-t-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                   <Bot className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg font-semibold">ICY AI Assistant</CardTitle>
+                  <DialogTitle className="text-lg font-semibold text-white">ICY AI Assistant</DialogTitle>
                   <p className="text-xs text-white/80">Powered by Gemini</p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(false)}
-                className="text-white hover:bg-white/20"
-              >
-                <X className="h-5 w-5" />
-              </Button>
+            </DialogHeader>
+            <div className="flex-1 overflow-hidden">
+              <ChatContent />
             </div>
-          </CardHeader>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
 
-          {/* Messages Area */}
-          <CardContent className="flex-1 overflow-hidden p-0">
-            <ScrollArea className="h-full p-4">
-              <div className="space-y-4">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={cn(
-                      "flex gap-3",
-                      message.role === 'user' ? "flex-row-reverse" : "flex-row"
-                    )}
-                  >
-                    <Avatar className={cn(
-                      "h-8 w-8 flex-shrink-0",
-                      message.role === 'user'
-                        ? "bg-primary"
-                        : "bg-gradient-to-r from-purple-600 to-blue-600"
-                    )}>
-                      <div className="flex h-full w-full items-center justify-center">
-                        {message.role === 'user' ? (
-                          <User className="h-4 w-4 text-white" />
-                        ) : (
-                          <Bot className="h-4 w-4 text-white" />
-                        )}
-                      </div>
-                    </Avatar>
-                    <div
-                      className={cn(
-                        "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm",
-                        message.role === 'user'
-                          ? "bg-primary text-primary-foreground rounded-tr-sm"
-                          : "bg-muted rounded-tl-sm"
-                      )}
-                    >
-                      <p className="whitespace-pre-wrap">{message.content}</p>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Loading indicator */}
-                {isLoading && (
-                  <div className="flex gap-3">
-                    <Avatar className="h-8 w-8 bg-gradient-to-r from-purple-600 to-blue-600">
-                      <div className="flex h-full w-full items-center justify-center">
-                        <Bot className="h-4 w-4 text-white" />
-                      </div>
-                    </Avatar>
-                    <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Suggested questions (only show when no messages yet) */}
-                {messages.length === 1 && !isLoading && (
-                  <div className="mt-4">
-                    <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {suggestedQuestions.map((question, idx) => (
-                        <Button
-                          key={idx}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs h-auto py-1.5 px-3"
-                          onClick={() => {
-                            setInputValue(question);
-                            inputRef.current?.focus();
-                          }}
-                        >
-                          {question}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
-          </CardContent>
-
-          {/* Input Area */}
-          <div className="flex-shrink-0 border-t p-4">
-            {error && (
-              <p className="text-xs text-destructive mb-2">{error}</p>
-            )}
-            <div className="flex gap-2">
-              <Input
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask me anything..."
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isLoading}
-                size="icon"
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
-    </>
-  );
+  // Floating variant (default) - hidden since we're using card variant
+  return null;
 }
 

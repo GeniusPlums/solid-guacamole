@@ -114,7 +114,7 @@ export default function InfluencerDashboard() {
         </div>
 
         {/* Main Content - Apple card style */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6">
           {/* Profile Completion Card */}
           <Card className={`border-0 ${profileCompletion < 100 ? 'bg-foreground text-background' : 'bg-secondary/30'}`}>
             <CardContent className="p-8">
@@ -190,14 +190,16 @@ export default function InfluencerDashboard() {
               )}
             </CardContent>
           </Card>
+
+          {/* AI Assistant Card */}
+          <AIChatbot
+            userType="influencer"
+            userName={profile?.fullName}
+            influencerInfo={influencerProfile}
+            variant="card"
+          />
         </div>
       </div>
-
-      <AIChatbot
-        userType="influencer"
-        userName={profile?.fullName}
-        influencerInfo={influencerProfile}
-      />
     </DashboardLayout>
   );
 }

@@ -137,8 +137,17 @@ export default function BrandDashboard() {
           />
         </div>
 
-        {/* Quick Actions - Apple card style */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        {/* Quick Actions - 3 column grid with AI Chat */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* AI Assistant Card - Prominent placement */}
+          <AIChatbot
+            userType="brand"
+            userName={brandProfile?.company_name || profile?.full_name}
+            influencers={influencersForChat}
+            brandInfo={brandProfile}
+            variant="card"
+          />
+
           <Card className="border-0 bg-foreground text-background overflow-hidden">
             <CardContent className="p-8">
               <div className="flex items-start gap-4 mb-6">
@@ -146,18 +155,18 @@ export default function BrandDashboard() {
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-1">AI-Powered Discovery</h3>
-                  <p className="text-background/70">Find your perfect creator match</p>
+                  <h3 className="text-xl font-semibold mb-1">AI Discovery</h3>
+                  <p className="text-background/70">Find your perfect match</p>
                 </div>
               </div>
               <p className="text-background/80 mb-6 leading-relaxed">
-                Our AI analyzes thousands of creators to find the perfect match for your campaign goals, target audience, and budget.
+                Our AI analyzes thousands of creators to find the perfect match for your campaign goals.
               </p>
               <Button
                 className="w-full bg-background text-foreground hover:bg-background/90"
                 onClick={() => navigate("/brand/discover")}
               >
-                Start AI Discovery
+                Start Discovery
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
@@ -171,11 +180,11 @@ export default function BrandDashboard() {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-1">Create Campaign</h3>
-                  <p className="text-muted-foreground">Launch a new marketing campaign</p>
+                  <p className="text-muted-foreground">Launch a new campaign</p>
                 </div>
               </div>
               <p className="text-muted-foreground mb-6 leading-relaxed">
-                Set up a campaign with specific goals, budget, and requirements. Track performance and manage multiple partnerships.
+                Set up campaigns with goals, budget, and requirements. Manage partnerships easily.
               </p>
               <Button
                 variant="outline"
@@ -189,13 +198,6 @@ export default function BrandDashboard() {
           </Card>
         </div>
       </div>
-
-      <AIChatbot
-        userType="brand"
-        userName={brandProfile?.company_name || profile?.full_name}
-        influencers={influencersForChat}
-        brandInfo={brandProfile}
-      />
     </DashboardLayout>
   );
 }
