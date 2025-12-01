@@ -9,6 +9,7 @@ import { influencersRouter } from './routes/influencers';
 import { messagesRouter } from './routes/messages';
 import { analyticsRouter } from './routes/analytics';
 import { shortlistsRouter } from './routes/shortlists';
+import { chatRouter } from './routes/chat';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +32,7 @@ app.use('/api/influencers', influencersRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/shortlists', shortlistsRouter);
+app.use('/api/chat', chatRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

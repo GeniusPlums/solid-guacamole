@@ -122,7 +122,7 @@ export default function InfluencerAnalytics() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                   <span className="text-sm">Rating</span>
-                  <span className="font-bold flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" />{summary.rating > 0 ? summary.rating.toFixed(1) : 'N/A'}</span>
+                  <span className="font-bold flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" />{summary.rating > 0 ? Number(summary.rating).toFixed(1) : 'N/A'}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                   <span className="text-sm">Total Earnings</span>

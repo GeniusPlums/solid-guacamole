@@ -137,7 +137,7 @@ export default function InfluencerProfileView() {
                     )}
                     <div className="flex items-center gap-1 text-xl">
                       <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-                      <span className="font-bold">{influencer.rating?.toFixed(1) || "N/A"}</span>
+                      <span className="font-bold">{influencer.rating ? Number(influencer.rating).toFixed(1) : "N/A"}</span>
                     </div>
                   </div>
                 </div>

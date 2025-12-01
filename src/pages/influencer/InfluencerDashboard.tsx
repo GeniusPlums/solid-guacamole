@@ -92,7 +92,7 @@ export default function InfluencerDashboard() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Rating"
-            value={influencerProfile?.rating?.toFixed(1) || "N/A"}
+            value={influencerProfile?.rating ? Number(influencerProfile.rating).toFixed(1) : "N/A"}
             icon={Star}
           />
           <StatCard
