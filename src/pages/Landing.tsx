@@ -53,7 +53,7 @@ const Landing = () => {
           <div className="flex items-center justify-between h-12">
             <div className="flex items-center space-x-3">
               <div className="w-7 h-7 bg-foreground rounded-lg flex items-center justify-center">
-                <span className="text-background text-sm font-bold">ICY</span>
+                <span className="text-background text-sm font-bold">Fiery</span>
               </div>
             </div>
             <div className="flex items-center space-x-6">
@@ -203,7 +203,7 @@ const Landing = () => {
                 Ready to get started?
               </h2>
               <p className="text-lg opacity-80 mb-8 max-w-xl mx-auto">
-                Join thousands of brands and creators building successful partnerships on ICY.
+                Join thousands of brands and creators building successful partnerships on Fiery.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
@@ -231,10 +231,10 @@ const Landing = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-3">
               <div className="w-6 h-6 bg-foreground rounded-md flex items-center justify-center">
-                <span className="text-background text-xs font-bold">ICY</span>
+                <span className="text-background text-xs font-bold">Fiery</span>
               </div>
               <span className="text-sm text-muted-foreground">
-                © 2025 ICY Platform. All rights reserved.
+                © 2025 Fiery Platform. All rights reserved.
               </span>
             </div>
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">

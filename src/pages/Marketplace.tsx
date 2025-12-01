@@ -67,7 +67,7 @@ const Marketplace = () => {
           <div className="flex items-center justify-between h-12">
             <div className="flex items-center space-x-3 cursor-pointer" onClick={handleGoHome}>
               <div className="w-7 h-7 bg-foreground rounded-lg flex items-center justify-center">
-                <span className="text-background text-sm font-bold">ICY</span>
+                <span className="text-background text-sm font-bold">Fiery</span>
               </div>
             </div>
             <div className="flex items-center gap-4">

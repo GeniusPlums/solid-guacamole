@@ -121,126 +121,6 @@ export function AIChatbot({ userType, userName, influencers, brandInfo, influenc
         "What makes a good collaboration?"
       ];
 
-  // Chat content component (shared between card and dialog)
-  const ChatContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Messages Area */}
-      <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full p-4">
-          <div className="space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "flex gap-3",
-                  message.role === 'user' ? "flex-row-reverse" : "flex-row"
-                )}
-              >
-                <Avatar className={cn(
-                  "h-8 w-8 flex-shrink-0",
-                  message.role === 'user'
-                    ? "bg-primary"
-                    : "bg-gradient-to-r from-purple-600 to-blue-600"
-                )}>
-                  <div className="flex h-full w-full items-center justify-center">
-                    {message.role === 'user' ? (
-                      <User className="h-4 w-4 text-white" />
-                    ) : (
-                      <Bot className="h-4 w-4 text-white" />
-                    )}
-                  </div>
-                </Avatar>
-                <div
-                  className={cn(
-                    "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
-                    message.role === 'user'
-                      ? "bg-primary text-primary-foreground rounded-tr-sm"
-                      : "bg-muted rounded-tl-sm"
-                  )}
-                >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                </div>
-              </div>
-            ))}
-
-            {/* Loading indicator */}
-            {isLoading && (
-              <div className="flex gap-3">
-                <Avatar className="h-8 w-8 bg-gradient-to-r from-purple-600 to-blue-600">
-                  <div className="flex h-full w-full items-center justify-center">
-                    <Bot className="h-4 w-4 text-white" />
-                  </div>
-                </Avatar>
-                <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Suggested questions (only show when no messages yet) */}
-            {messages.length === 1 && !isLoading && (
-              <div className="mt-4">
-                <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
-                <div className="flex flex-wrap gap-2">
-                  {suggestedQuestions.map((question, idx) => (
-                    <Button
-                      key={idx}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs h-auto py-1.5 px-3"
-                      onClick={() => {
-                        setInputValue(question);
-                        inputRef.current?.focus();
-                      }}
-                    >
-                      {question}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
-      </div>
-
-      {/* Input Area */}
-      <div className="flex-shrink-0 border-t p-4">
-        {error && (
-          <p className="text-xs text-destructive mb-2">{error}</p>
-        )}
-        <div className="flex gap-2">
-          <Input
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask me anything..."
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            size="icon"
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-
   // Card variant - shows as a dashboard card
   if (variant === 'card') {
     return (
@@ -284,13 +164,121 @@ export function AIChatbot({ userType, userName, influencers, brandInfo, influenc
                   <Bot className="h-5 w-5" />
                 </div>
                 <div>
-                  <DialogTitle className="text-lg font-semibold text-white">ICY AI Assistant</DialogTitle>
+                  <DialogTitle className="text-lg font-semibold text-white">Fiery AI Assistant</DialogTitle>
                   <p className="text-xs text-white/80">Powered by Gemini</p>
                 </div>
               </div>
             </DialogHeader>
-            <div className="flex-1 overflow-hidden">
-              <ChatContent />
+            {/* Chat content inline to preserve input focus */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex gap-3",
+                        message.role === 'user' ? "flex-row-reverse" : "flex-row"
+                      )}
+                    >
+                      <Avatar className={cn(
+                        "h-8 w-8 flex-shrink-0",
+                        message.role === 'user'
+                          ? "bg-primary"
+                          : "bg-gradient-to-r from-purple-600 to-blue-600"
+                      )}>
+                        <div className="flex h-full w-full items-center justify-center">
+                          {message.role === 'user' ? (
+                            <User className="h-4 w-4 text-white" />
+                          ) : (
+                            <Bot className="h-4 w-4 text-white" />
+                          )}
+                        </div>
+                      </Avatar>
+                      <div
+                        className={cn(
+                          "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
+                          message.role === 'user'
+                            ? "bg-primary text-primary-foreground rounded-tr-sm"
+                            : "bg-muted rounded-tl-sm"
+                        )}
+                      >
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {isLoading && (
+                    <div className="flex gap-3">
+                      <Avatar className="h-8 w-8 bg-gradient-to-r from-purple-600 to-blue-600">
+                        <div className="flex h-full w-full items-center justify-center">
+                          <Bot className="h-4 w-4 text-white" />
+                        </div>
+                      </Avatar>
+                      <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {messages.length === 1 && !isLoading && (
+                    <div className="mt-4">
+                      <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestedQuestions.map((question, idx) => (
+                          <Button
+                            key={idx}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-auto py-1.5 px-3"
+                            onClick={() => {
+                              setInputValue(question);
+                              inputRef.current?.focus();
+                            }}
+                          >
+                            {question}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
+
+              <div className="flex-shrink-0 border-t p-4">
+                {error && (
+                  <p className="text-xs text-destructive mb-2">{error}</p>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    ref={inputRef}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask me anything..."
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!inputValue.trim() || isLoading}
+                    size="icon"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

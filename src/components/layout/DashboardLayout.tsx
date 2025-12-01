@@ -81,7 +81,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               onClick={() => navigate(isBrand ? "/brand/dashboard" : "/influencer/dashboard")}
             >
               <div className="w-7 h-7 bg-foreground rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
-                <span className="text-background text-sm font-bold">ICY</span>
+                <span className="text-background text-sm font-bold">Fiery</span>
               </div>
             </div>
 

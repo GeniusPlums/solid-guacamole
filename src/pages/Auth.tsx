@@ -110,10 +110,10 @@ const Auth = () => {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="w-14 h-14 bg-foreground rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <span className="text-background text-xl font-bold">ICY</span>
+            <span className="text-background text-xl font-bold">Fiery</span>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight mb-2">
-            Welcome to ICY
+            Welcome to Fiery
           </h1>
           <p className="text-muted-foreground">
             {userType === "brand"

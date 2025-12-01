@@ -1,5 +1,5 @@
 /**
- * Gemini AI Integration for ICY Platform
+ * Gemini AI Integration for Fiery Platform
  * Provides AI-powered influencer matching and recommendations
  */
 

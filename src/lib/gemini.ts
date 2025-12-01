@@ -1,4 +1,4 @@
-// Gemini AI Service for ICY Platform Chatbot
+// Gemini AI Service for Fiery Platform Chatbot
 // This now calls the backend API to keep the Gemini API key secure
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
